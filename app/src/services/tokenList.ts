@@ -79,6 +79,22 @@ export const ALPH_TOKEN: TokenInfo = {
   logoURI: 'https://raw.githubusercontent.com/alephium/token-list/master/logos/ALPH.png',
 }
 
+export async function fetchTokenBalance(address: string, tokenId: string): Promise<bigint> {
+  try {
+    const provider = web3.getCurrentNodeProvider()
+    const balance = await provider.addresses.getAddressesAddressBalance(address)
+
+    if (tokenId === ALPH_TOKEN.id || /^0+$/.test(tokenId)) {
+      return BigInt(balance.balance)
+    }
+
+    const token = balance.tokenBalances?.find(t => t.id === tokenId)
+    return token ? BigInt(token.amount) : 0n
+  } catch {
+    return 0n
+  }
+}
+
 export function findTokenById(tokens: TokenInfo[], id: string): TokenInfo | undefined {
   return tokens.find(t => t.id === id)
 }

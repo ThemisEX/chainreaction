@@ -11,7 +11,7 @@ import { web3 } from '@alephium/web3'
 import { useChainReaction } from '@/hooks/useChainReaction'
 import { GameConfig } from '@/services/utils'
 import { startChain, joinChain, endChain, incentivize, GameState } from '@/services/game.service'
-import { TokenInfo, ALPH_TOKEN, fetchWalletTokens, findTokenById, formatTokenAmount } from '@/services/tokenList'
+import { TokenInfo, ALPH_TOKEN, fetchWalletTokens, fetchTokenBalance, findTokenById, formatTokenAmount } from '@/services/tokenList'
 
 type UIState = 'loading' | 'no-chain' | 'active' | 'claimable' | 'error'
 
@@ -33,11 +33,12 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const [ongoingTxId, setOngoingTxId] = useState<string>()
   const [txError, setTxError] = useState<string>()
   const [durationHours, setDurationHours] = useState(1)
-  const [multiplierPct, setMultiplierPct] = useState(10)
+  const [multiplierPct, setMultiplierPct] = useState(20)
   const [baseEntry, setBaseEntry] = useState('0.1')
   const [incentiveAmount, setIncentiveAmount] = useState('1')
   const [selectedToken, setSelectedToken] = useState<TokenInfo>(ALPH_TOKEN)
   const [tokenList, setTokenList] = useState<TokenInfo[]>([ALPH_TOKEN])
+  const [userBalance, setUserBalance] = useState<bigint | null>(null)
 
   useEffect(() => {
     if (account?.address) {
@@ -47,17 +48,42 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
     }
   }, [account?.address])
 
+  useEffect(() => {
+    if (account?.address && gameState?.tokenId && gameState.isActive) {
+      fetchTokenBalance(account.address, gameState.tokenId).then(setUserBalance)
+    } else {
+      setUserBalance(null)
+    }
+  }, [account?.address, gameState?.tokenId, gameState?.isActive, gameState?.nextEntryPrice])
+
   const uiState = deriveUIState(gameState, isLoading, error)
 
   const isLastPlayer = !ongoingTxId && account && gameState
     ? account.address === gameState.lastPlayer
     : false
 
+  const hasEnoughBalance = userBalance !== null && gameState
+    ? userBalance >= gameState.nextEntryPrice
+    : true
+
   // Resolve the active game's token info
   const activeToken = useMemo(() => {
     if (!gameState?.tokenId) return ALPH_TOKEN
     return findTokenById(tokenList, gameState.tokenId) ?? ALPH_TOKEN
   }, [gameState?.tokenId, tokenList])
+
+  // Compute boosted amount = pot minus sum of all entry fees
+  const totalBoosted = useMemo(() => {
+    if (!gameState || !gameState.isActive) return 0n
+    let entrySum = 0n
+    let price = gameState.baseEntry
+    const multiplier = 10000n + gameState.multiplierBps
+    for (let i = 0n; i < gameState.playerCount; i++) {
+      entrySum += price
+      price = price * multiplier / 10000n
+    }
+    return gameState.pot > entrySum ? gameState.pot - entrySum : 0n
+  }, [gameState?.pot, gameState?.baseEntry, gameState?.multiplierBps, gameState?.playerCount, gameState?.isActive])
 
   const handleStartChain = async () => {
     if (!signer) { onConnectRequest(); return }
@@ -140,13 +166,18 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
         return { label: 'Loading...', onClick: undefined, disabled: true, variant: 'default' as const }
       case 'no-chain':
         return { label: 'Start Chain', onClick: handleStartChain, disabled: !!ongoingTxId, variant: 'start' as const }
-      case 'active':
+      case 'active': {
+        const canPlay = !isLastPlayer && hasEnoughBalance
+        let label = `Play\n${fmt(gameState!.nextEntryPrice)} ${activeToken.symbol}`
+        if (isLastPlayer) label = 'You\'re in the lead!'
+        else if (!hasEnoughBalance) label = `Not enough ${activeToken.symbol}`
         return {
-          label: isLastPlayer ? 'You\'re in the lead!' : `Play\n${fmt(gameState!.nextEntryPrice)} ${activeToken.symbol}`,
-          onClick: isLastPlayer ? undefined : handleJoinChain,
-          disabled: !!ongoingTxId || !!isLastPlayer,
+          label,
+          onClick: canPlay ? handleJoinChain : undefined,
+          disabled: !!ongoingTxId || !canPlay,
           variant: 'join' as const,
         }
+      }
       case 'claimable':
         return { label: 'Claim Prize!', onClick: handleEndChain, disabled: !!ongoingTxId, variant: 'claim' as const }
       case 'error':
@@ -186,9 +217,10 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
         <>
           <GameStats
             pot={gameState.pot}
+            totalBoosted={totalBoosted}
             entryPrice={gameState.nextEntryPrice}
             lastPlayer={gameState.lastPlayer}
-            chainId={gameState.chainId}
+            playerCount={gameState.playerCount}
             multiplierBps={gameState.multiplierBps}
             currentUserAddress={ongoingTxId ? undefined : account?.address}
             tokenSymbol={activeToken.symbol}
