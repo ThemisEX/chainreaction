@@ -252,6 +252,13 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
         loading={!!ongoingTxId}
       />
 
+      <button
+        onClick={() => setSoundEnabled(prev => !prev)}
+        className={`text-sm transition-colors -mt-2 ${soundEnabled ? 'text-emerald-500' : 'text-gray-400 hover:text-emerald-500'}`}
+      >
+        {soundEnabled ? 'Notify when overtaken: on' : 'Notify when overtaken: off'}
+      </button>
+
       {gameState && gameState.isActive && (
         <>
           <GameStats
@@ -375,13 +382,6 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
       </details>
 
       <div className="flex gap-3 mt-2">
-        <button
-          onClick={() => setSoundEnabled(prev => !prev)}
-          className={`text-xs transition-colors ${soundEnabled ? 'text-emerald-500' : 'text-gray-400 hover:text-emerald-500'}`}
-        >
-          {soundEnabled ? 'Sound on' : 'Sound off'}
-        </button>
-        <span className="text-gray-300">|</span>
         <button
           onClick={() => {
             const text = gameState?.isActive
