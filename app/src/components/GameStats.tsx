@@ -43,7 +43,7 @@ export const GameStats: FC<GameStatsProps> = ({
         </span>
       </div>
       <div className="col-span-2 text-center text-xs text-gray-400 pt-1">
-        Chain #{chainId.toString()} &middot; +{multiplierPct}% per join
+        Chain #{chainId.toString()} &middot; +{multiplierPct}% per play
       </div>
     </div>
   )

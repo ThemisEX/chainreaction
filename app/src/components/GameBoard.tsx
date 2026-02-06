@@ -142,7 +142,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
         return { label: 'Start Chain', onClick: handleStartChain, disabled: !!ongoingTxId, variant: 'start' as const }
       case 'active':
         return {
-          label: isLastPlayer ? 'Waiting...' : `Join\n${fmt(gameState!.nextEntryPrice)} ${activeToken.symbol}`,
+          label: isLastPlayer ? 'Waiting...' : `Play\n${fmt(gameState!.nextEntryPrice)} ${activeToken.symbol}`,
           onClick: isLastPlayer ? undefined : handleJoinChain,
           disabled: !!ongoingTxId || !!isLastPlayer,
           variant: 'join' as const,
@@ -297,7 +297,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
         </summary>
         <div className="mt-3 text-sm text-gray-500 space-y-2 p-4 bg-gray-50 rounded-xl border border-gray-100">
           <p><span className="font-semibold text-gray-700">1. Start a chain</span> — Pick a token, set the entry price, countdown duration, and price increase. You become the first player.</p>
-          <p><span className="font-semibold text-gray-700">2. Join the chain</span> — Each new player pays a higher entry fee (previous price + the % increase). Every join resets the countdown.</p>
+          <p><span className="font-semibold text-gray-700">2. Enter the chain</span> — Each new player pays a higher entry fee (previous price + the % increase). Every play resets the countdown.</p>
           <p><span className="font-semibold text-gray-700">3. The clock tightens</span> — The countdown shrinks with each player, making the game more intense as it goes on.</p>
           <p><span className="font-semibold text-gray-700">4. Last player wins</span> — When the timer runs out, the last person who joined wins the entire pot. Anyone can trigger the payout.</p>
           <p className="text-gray-400 text-xs pt-1">You can also boost the pot at any time to make the prize more attractive without resetting the timer.</p>
