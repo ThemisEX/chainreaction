@@ -144,7 +144,7 @@ Contract ChainReaction(
         assert!(isActive, ErrorCodes.ChainNotActive)
         let caller = callerAddress!()
 
-        transferTokenToSelf!(callerAddress!(), tokenId, amount)
+        transferTokenToSelf!(caller, tokenId, amount)
         pot = pot + amount
 
         emit PotBoosted(caller, amount)
