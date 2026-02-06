@@ -1,62 +1,57 @@
-# My Next.js dApp with app router
+# Chain Reaction
 
-This template monorepo was designed to provide a developer-friendly experience to Alephium ecosystem newcomers. It is split into 2 parts:
+A last-player-wins game on the [Alephium](https://alephium.org) blockchain.
 
-- app: contains the Next.js frontend part of the dApp
-- contracts: contains the dApp contracts
+## How it works
 
-It uses **yarn workspaces** to manage both app and contract projects from the monorepo root.
+1. **Someone starts a chain** by choosing a token (ALPH or any supported token), setting an entry price, a countdown duration, and a price increase percentage.
+2. **Players join** by paying the current entry price, which increases with each new player (e.g. +10% per join). Every join resets the countdown timer.
+3. **The timer shrinks** — each new player slightly reduces the remaining duration, ratcheting up the pressure.
+4. **When the countdown expires**, the last player to have joined wins the entire pot. Anyone can trigger the payout.
+
+Anyone can also **boost the pot** by adding extra tokens at any time, making the prize more attractive without resetting the timer.
+
+## Smart contract
+
+The game runs entirely on-chain via a single Ralph contract (`ChainReaction`). Key mechanics:
+
+- **Entry price escalation**: each join costs `currentEntry + (currentEntry * multiplierBps / 10000)`, where `multiplierBps` is set by the chain starter (e.g. 1000 = 10%)
+- **Duration decrease**: the countdown shrinks by a fixed amount per player, down to a configurable minimum — the more players, the faster the clock runs out
+- **Multi-token support**: chains can use ALPH or any Alephium token
+- **No admin keys**: the contract has no owner and no special privileges — anyone can start a chain, join, boost the pot, or trigger the payout
+
+## Project structure
+
+- `app/` — Next.js frontend (React, Tailwind CSS, `@alephium/web3-react`)
+- `contracts/` — Ralph smart contract and deployment scripts
 
 ## Local development
 
-To get started quickly, follow these steps:
+### Prerequisites
 
-### Set up a devnet
+- [Node.js](https://nodejs.org/) and [Yarn](https://yarnpkg.com/)
+- A running Alephium devnet — see the [Getting Started docs](https://docs.alephium.org/full-node/getting-started#devnet)
 
-Start a local devnet for testing and development. Please refer to the [Getting Started documentation](https://docs.alephium.org/full-node/getting-started#devnet).
+### Setup
 
-### Install dependencies
-
-```
+```bash
 yarn install
-```
-
-### Compile the contracts
-
-```
 yarn compile
-```
-
-### Deploy the contracts
-
-```
 yarn deploy
-```
-
-### Build the contracts package
-
-```
-yarn build:contracts
-```
-
-### Run the app
-
-```
 yarn dev
 ```
 
-### Install an Alephium wallet
+### Wallet
 
-Download an [Alephium wallet](https://alephium.org/#wallets), and connect it to your devnet dApp.
+Download an [Alephium wallet](https://alephium.org/#wallets) and connect it to your devnet.
 
-## Testnet, Mainnet, and More
+## Deployment
 
-You could use yarn workspace to run commands in the contracts or app directory.
+The app is configured for static export and can be deployed to GitHub Pages. Environment variables:
 
-```
-yarn <my-contracts|my-dapp> <command>
-```
+- `NEXT_PUBLIC_NETWORK` — `devnet`, `testnet`, or `mainnet`
+- `NEXT_PUBLIC_NODE_URL` — Alephium full node URL
 
-You could also get some testnet tokens from the [Faucet](https://docs.alephium.org/infrastructure/public-services/#testnet-faucet).
+## Built by
 
-To learn more about smart contract development on Alephium, take a look at the [documentation](https://docs.alephium.org/dapps/).
+[No Trust Verify](https://notrustverify.ch)
