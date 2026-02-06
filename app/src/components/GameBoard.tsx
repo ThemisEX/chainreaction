@@ -42,6 +42,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const [copiedShare, setCopiedShare] = useState<'embed' | null>(null)
   const [soundEnabled, setSoundEnabled] = useState(false)
   const wasLastPlayerRef = useRef(false)
+  const dingRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     if (account?.address) {
@@ -66,8 +67,9 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
     : false
 
   useEffect(() => {
-    if (wasLastPlayerRef.current && !isLastPlayer && soundEnabled) {
-      new Audio('/ding.mp3').play().catch(() => {})
+    if (wasLastPlayerRef.current && !isLastPlayer && soundEnabled && dingRef.current) {
+      dingRef.current.currentTime = 0
+      dingRef.current.play().catch(() => {})
     }
     wasLastPlayerRef.current = isLastPlayer
   }, [isLastPlayer, soundEnabled])
@@ -244,7 +246,15 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
       />
 
       <button
-        onClick={() => setSoundEnabled(prev => !prev)}
+        onClick={() => {
+          setSoundEnabled(prev => {
+            if (!prev) {
+              if (!dingRef.current) dingRef.current = new Audio('/ding.mp3')
+              dingRef.current.play().catch(() => {})
+            }
+            return !prev
+          })
+        }}
         className={`text-sm transition-colors -mt-2 ${soundEnabled ? 'text-emerald-500' : 'text-gray-400 hover:text-emerald-500'}`}
       >
         {soundEnabled ? 'Notify when overtaken: on' : 'Notify when overtaken: off'}
