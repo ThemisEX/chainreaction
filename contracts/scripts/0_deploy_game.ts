@@ -1,7 +1,7 @@
 import { Deployer, DeployFunction, Network } from '@alephium/cli'
 import { Settings } from '../alephium.config'
 import { ChainReaction } from '../artifacts/ts'
-import { stringToHex, NULL_CONTRACT_ADDRESS } from '@alephium/web3'
+import { stringToHex, NULL_CONTRACT_ADDRESS, ALPH_TOKEN_ID } from '@alephium/web3'
 
 // This deploy function will be called by cli deployment tool automatically
 // Note that deployment scripts should prefixed with numbers (starting from 0)
@@ -17,7 +17,6 @@ const deployGame: DeployFunction<Settings> = async (
       chainId: 0n,
       currentEntry: 0n,
       endTimestamp: 0n,
-      houseFee: 0n,
       isActive: false,
       lastEntryTimestamp: 0n,
       durationMs: 0n,
@@ -26,7 +25,8 @@ const deployGame: DeployFunction<Settings> = async (
       playerCount: 0n,
       pot: 0n,
       durationDecreaseMs: 60n*1000n,
-      minDuration: 60n*1000n
+      minDuration: 60n*1000n,
+      tokenId: ALPH_TOKEN_ID
 
     }
   })

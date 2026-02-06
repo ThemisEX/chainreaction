@@ -1,4 +1,4 @@
-import { SignerProvider, ONE_ALPH, prettifyAttoAlphAmount, DUST_AMOUNT } from '@alephium/web3'
+import { SignerProvider, ALPH_TOKEN_ID, prettifyAttoAlphAmount, DUST_AMOUNT, ONE_ALPH, MINIMAL_CONTRACT_DEPOSIT } from '@alephium/web3'
 import { ChainReactionInstance } from 'my-contracts'
 
 export interface GameState {
@@ -15,6 +15,21 @@ export interface GameState {
   baseEntry: bigint
   multiplierBps: bigint
   durationMs: bigint
+  tokenId: string
+}
+
+function isAlph(tokenId: string): boolean {
+  return !tokenId || tokenId === ALPH_TOKEN_ID || /^0+$/.test(tokenId)
+}
+
+function buildTxParams(tokenId: string, payment: bigint) {
+  if (isAlph(tokenId)) {
+    return { attoAlphAmount: payment + ONE_ALPH }
+  }
+  return {
+    attoAlphAmount: MINIMAL_CONTRACT_DEPOSIT + DUST_AMOUNT,
+    tokens: [{ id: tokenId, amount: payment }],
+  }
 }
 
 export async function fetchGameState(contract: ChainReactionInstance): Promise<GameState> {
@@ -38,20 +53,22 @@ export async function fetchGameState(contract: ChainReactionInstance): Promise<G
     baseEntry: fields.baseEntry,
     multiplierBps: fields.multiplierBps,
     durationMs: fields.durationMs,
+    tokenId: fields.tokenId,
   }
 }
 
 export async function startChain(
   contract: ChainReactionInstance,
   signer: SignerProvider,
-  paymentAttoAlph: bigint,
+  payment: bigint,
   durationMs: bigint,
-  multiplierBps: bigint
+  multiplierBps: bigint,
+  tokenId: string
 ): Promise<{ txId: string }> {
   const result = await contract.transact.startChain({
     signer,
-    args: { payment: paymentAttoAlph, durationGameMs: durationMs, multiplierGameBps: multiplierBps },
-    attoAlphAmount: paymentAttoAlph + 2n*DUST_AMOUNT,
+    args: { payment, durationGameMs: durationMs, multiplierGameBps: multiplierBps, tokenIdGame: tokenId },
+    ...buildTxParams(tokenId, payment),
   })
   return { txId: result.txId }
 }
@@ -59,23 +76,25 @@ export async function startChain(
 export async function joinChain(
   contract: ChainReactionInstance,
   signer: SignerProvider,
-  paymentAttoAlph: bigint
+  payment: bigint,
+  tokenId: string
 ): Promise<{ txId: string }> {
   const result = await contract.transact.joinChain({
     signer,
-    args: { payment: paymentAttoAlph },
-    attoAlphAmount: paymentAttoAlph + 2n*DUST_AMOUNT,
+    args: { payment },
+    ...buildTxParams(tokenId, payment),
   })
   return { txId: result.txId }
 }
 
 export async function endChain(
   contract: ChainReactionInstance,
-  signer: SignerProvider
+  signer: SignerProvider,
+  tokenId: string
 ): Promise<{ txId: string }> {
   const result = await contract.transact.endChain({
     signer,
-    attoAlphAmount: 2n*DUST_AMOUNT,
+    attoAlphAmount: isAlph(tokenId) ? ONE_ALPH : ONE_ALPH,
   })
   return { txId: result.txId }
 }
@@ -83,12 +102,13 @@ export async function endChain(
 export async function incentivize(
   contract: ChainReactionInstance,
   signer: SignerProvider,
-  amountAttoAlph: bigint
+  amount: bigint,
+  tokenId: string
 ): Promise<{ txId: string }> {
   const result = await contract.transact.incentive({
     signer,
-    args: { amount: amountAttoAlph },
-    attoAlphAmount: amountAttoAlph + 2n*DUST_AMOUNT,
+    args: { amount },
+    ...buildTxParams(tokenId, amount),
   })
   return { txId: result.txId }
 }

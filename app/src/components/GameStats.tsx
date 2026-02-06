@@ -1,7 +1,8 @@
 'use client'
 
 import React, { FC } from 'react'
-import { formatAlph, shortenAddress } from '@/services/game.service'
+import { shortenAddress } from '@/services/game.service'
+import { formatTokenAmount } from '@/services/tokenList'
 
 interface GameStatsProps {
   pot: bigint
@@ -11,10 +12,12 @@ interface GameStatsProps {
   chainId: bigint
   multiplierBps: bigint
   currentUserAddress?: string
+  tokenSymbol: string
+  tokenDecimals: number
 }
 
 export const GameStats: FC<GameStatsProps> = ({
-  pot, entryPrice, playerCount, lastPlayer, chainId, multiplierBps, currentUserAddress
+  pot, entryPrice, playerCount, lastPlayer, chainId, multiplierBps, currentUserAddress, tokenSymbol, tokenDecimals
 }) => {
   const multiplierPct = Number(multiplierBps) / 100
   const isCurrentUserLast = currentUserAddress === lastPlayer
@@ -23,11 +26,11 @@ export const GameStats: FC<GameStatsProps> = ({
     <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
       <div className="flex flex-col items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
         <span className="text-[11px] text-gray-400 uppercase tracking-wider">Pot</span>
-        <span className="text-lg font-bold text-gray-900 mt-1">{formatAlph(pot)} ALPH</span>
+        <span className="text-lg font-bold text-gray-900 mt-1">{formatTokenAmount(pot, tokenDecimals)} {tokenSymbol}</span>
       </div>
       <div className="flex flex-col items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
         <span className="text-[11px] text-gray-400 uppercase tracking-wider">Next Entry</span>
-        <span className="text-lg font-bold text-gray-900 mt-1">{formatAlph(entryPrice)} ALPH</span>
+        <span className="text-lg font-bold text-gray-900 mt-1">{formatTokenAmount(entryPrice, tokenDecimals)} {tokenSymbol}</span>
       </div>
       <div className="flex flex-col items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
         <span className="text-[11px] text-gray-400 uppercase tracking-wider">Players</span>

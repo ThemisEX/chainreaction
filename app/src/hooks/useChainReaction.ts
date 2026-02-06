@@ -45,7 +45,8 @@ export function useChainReaction(contract: ChainReactionInstance) {
           event.name === 'PlayerJoined' ||
           event.name === 'ChainStarted' ||
           event.name === 'ChainEnded' ||
-          event.name === 'ChainTimeout'
+          event.name === 'ChainTimeout' ||
+          event.name === 'PotBoosted'
         ) {
           await refresh()
         }

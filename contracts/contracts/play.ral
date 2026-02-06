@@ -14,9 +14,9 @@ Contract ChainReaction(
     mut endTimestamp: U256,
     mut durationMs: U256,
     mut multiplierBps: U256,        // Multiplier in basis points (1000 = 10%)
+    mut tokenId: ByteVec,
     durationDecreaseMs: U256,
-    minDuration: U256,
-    houseFee: U256                 // House fee in basis points (500 = 5%)
+    minDuration: U256
 ) {
 
     // Events
@@ -37,7 +37,7 @@ Contract ChainReaction(
 
     // Start a new chain
     @using(preapprovedAssets = true, updateFields = true, checkExternalCaller = false, assetsInContract = true)
-    pub fn startChain(payment: U256, durationGameMs: U256, multiplierGameBps: U256) -> () {
+    pub fn startChain(payment: U256, durationGameMs: U256, multiplierGameBps: U256, tokenIdGame: ByteVec) -> () {
         // Check no active chain
         assert!(!isActive, ErrorCodes.ChainAlreadyActive)
         assert!(durationGameMs >= durationDecreaseMs, ErrorCodes.DurationToLow)
@@ -48,10 +48,11 @@ Contract ChainReaction(
         assert!(payment > 0, ErrorCodes.InsufficientPayment)
         let caller = callerAddress!()
 
-        transferTokenToSelf!(caller, ALPH, payment)
+        transferTokenToSelf!(caller, tokenId, payment)
 
         // Initialize new chain
         baseEntry = payment
+        tokenId = tokenIdGame
         durationMs = durationGameMs
         multiplierBps = multiplierGameBps
         chainId = chainId + 1
@@ -83,7 +84,7 @@ Contract ChainReaction(
         let requiredEntry = getNextEntryPrice()
         assert!(payment >= requiredEntry, ErrorCodes.InsufficientPayment)
 
-        transferTokenToSelf!(caller, ALPH, payment)
+        transferTokenToSelf!(caller, tokenId, payment)
 
         // Update state
         playerCount = playerCount + 1
@@ -112,14 +113,10 @@ Contract ChainReaction(
 
         assert!(canEnd(), ErrorCodes.TooEarlyToEnd)
 
-        // Calculate payout (pot - house fee)
-        let houseCut = pot * houseFee / 10000
-        let winnerPayout = pot - houseCut
-
         // Pay winner
-        transferTokenFromSelf!(lastPlayer, ALPH, winnerPayout)
+        transferTokenFromSelf!(lastPlayer, tokenId, pot)
 
-        emit ChainEnded(chainId, lastPlayer, winnerPayout)
+        emit ChainEnded(chainId, lastPlayer, pot)
 
         // Reset for next chain
         isActive = false
@@ -147,7 +144,7 @@ Contract ChainReaction(
         assert!(isActive, ErrorCodes.ChainNotActive)
         let caller = callerAddress!()
 
-        transferTokenToSelf!(callerAddress!(), ALPH, amount)
+        transferTokenToSelf!(callerAddress!(), tokenId, amount)
         pot = pot + amount
 
         emit PotBoosted(caller, amount)
@@ -161,11 +158,4 @@ Contract ChainReaction(
         return currentEntry + (currentEntry * multiplierBps / 10000)
     }
 
-    
-    // Withdraw house fees (owner only)
-   // @using(assetsInContract = true, checkExternalCaller = true)
-   // pub fn withdrawFees(to: Address, amount: U256) -> () {
-        // In production, add owner check here
-   //     transferTokenFromSelf!(to, ALPH, amount)
-   // }
 }

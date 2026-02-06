@@ -1,15 +1,17 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { FC } from 'react'
 import { BigButton } from './BigButton'
 import { CountdownTimer } from './CountdownTimer'
 import { GameStats } from './GameStats'
+import { TokenSelector } from './TokenSelector'
 import { useWallet } from '@alephium/web3-react'
 import { web3 } from '@alephium/web3'
 import { useChainReaction } from '@/hooks/useChainReaction'
 import { GameConfig } from '@/services/utils'
-import { startChain, joinChain, endChain, incentivize, formatAlph, GameState } from '@/services/game.service'
+import { startChain, joinChain, endChain, incentivize, GameState } from '@/services/game.service'
+import { TokenInfo, ALPH_TOKEN, fetchTokenList, findTokenById, formatTokenAmount } from '@/services/tokenList'
 
 type UIState = 'loading' | 'no-chain' | 'active' | 'claimable' | 'error'
 
@@ -30,10 +32,16 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const { gameState, isLoading, error, refresh } = useChainReaction(config.contractInstance)
   const [ongoingTxId, setOngoingTxId] = useState<string>()
   const [txError, setTxError] = useState<string>()
-  const [durationHours, setDurationHours] = useState(2)
+  const [durationHours, setDurationHours] = useState(1)
   const [multiplierPct, setMultiplierPct] = useState(10)
-  const [baseEntryAlph, setBaseEntryAlph] = useState('0.1')
-  const [incentiveAlph, setIncentiveAlph] = useState('1')
+  const [baseEntry, setBaseEntry] = useState('0.1')
+  const [incentiveAmount, setIncentiveAmount] = useState('1')
+  const [selectedToken, setSelectedToken] = useState<TokenInfo>(ALPH_TOKEN)
+  const [tokenList, setTokenList] = useState<TokenInfo[]>([ALPH_TOKEN])
+
+  useEffect(() => {
+    fetchTokenList().then(setTokenList)
+  }, [])
 
   const uiState = deriveUIState(gameState, isLoading, error)
 
@@ -41,14 +49,20 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
     ? account.address === gameState.lastPlayer
     : false
 
+  // Resolve the active game's token info
+  const activeToken = useMemo(() => {
+    if (!gameState?.tokenId) return ALPH_TOKEN
+    return findTokenById(tokenList, gameState.tokenId) ?? ALPH_TOKEN
+  }, [gameState?.tokenId, tokenList])
+
   const handleStartChain = async () => {
     if (!signer) { onConnectRequest(); return }
     setTxError(undefined)
     try {
-      const payment = BigInt(Math.floor(parseFloat(baseEntryAlph) * 1e18))
+      const payment = BigInt(Math.floor(parseFloat(baseEntry) * 10 ** selectedToken.decimals))
       const durationMs = BigInt(durationHours) * 3600n * 1000n
       const multiplierBps = BigInt(multiplierPct) * 100n
-      const result = await startChain(config.contractInstance, signer, payment, durationMs, multiplierBps)
+      const result = await startChain(config.contractInstance, signer, payment, durationMs, multiplierBps, selectedToken.id)
       setOngoingTxId(result.txId)
     } catch (err) {
       setTxError(err instanceof Error ? err.message : 'Transaction failed')
@@ -61,7 +75,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
     setTxError(undefined)
     try {
       const payment = gameState.nextEntryPrice
-      const result = await joinChain(config.contractInstance, signer, payment)
+      const result = await joinChain(config.contractInstance, signer, payment, gameState.tokenId)
       setOngoingTxId(result.txId)
     } catch (err) {
       setTxError(err instanceof Error ? err.message : 'Transaction failed')
@@ -72,7 +86,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
     if (!signer) { onConnectRequest(); return }
     setTxError(undefined)
     try {
-      const result = await endChain(config.contractInstance, signer)
+      const result = await endChain(config.contractInstance, signer, gameState?.tokenId ?? '')
       setOngoingTxId(result.txId)
     } catch (err) {
       setTxError(err instanceof Error ? err.message : 'Transaction failed')
@@ -80,11 +94,11 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   }
 
   const handleIncentivize = async () => {
-    if (!signer) { onConnectRequest(); return }
+    if (!signer || !gameState) { onConnectRequest(); return }
     setTxError(undefined)
     try {
-      const amount = BigInt(Math.floor(parseFloat(incentiveAlph) * 1e18))
-      const result = await incentivize(config.contractInstance, signer, amount)
+      const amount = BigInt(Math.floor(parseFloat(incentiveAmount) * 10 ** activeToken.decimals))
+      const result = await incentivize(config.contractInstance, signer, amount, gameState.tokenId)
       setOngoingTxId(result.txId)
     } catch (err) {
       setTxError(err instanceof Error ? err.message : 'Transaction failed')
@@ -114,6 +128,8 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
     return () => { cancelled = true }
   }, [ongoingTxId, refresh])
 
+  const fmt = (amount: bigint) => formatTokenAmount(amount, activeToken.decimals)
+
   const getButtonProps = () => {
     switch (uiState) {
       case 'loading':
@@ -122,7 +138,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
         return { label: 'Start Chain', onClick: handleStartChain, disabled: !!ongoingTxId, variant: 'start' as const }
       case 'active':
         return {
-          label: isLastPlayer ? 'Waiting...' : `Join\n${formatAlph(gameState!.nextEntryPrice)} ALPH`,
+          label: isLastPlayer ? 'Waiting...' : `Join\n${fmt(gameState!.nextEntryPrice)} ${activeToken.symbol}`,
           onClick: isLastPlayer ? undefined : handleJoinChain,
           disabled: !!ongoingTxId || !!isLastPlayer,
           variant: 'join' as const,
@@ -172,6 +188,8 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
             chainId={gameState.chainId}
             multiplierBps={gameState.multiplierBps}
             currentUserAddress={account?.address}
+            tokenSymbol={activeToken.symbol}
+            tokenDecimals={activeToken.decimals}
           />
           <details className="w-full max-w-sm">
             <summary className="text-sm text-gray-400 cursor-pointer hover:text-emerald-500 transition-colors text-center select-none">
@@ -180,21 +198,21 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
             <div className="mt-3 flex gap-2 items-end">
               <div className="flex-1 flex flex-col gap-1">
                 <label htmlFor="incentive" className="text-[11px] text-gray-400 uppercase tracking-wider">
-                  Amount (ALPH)
+                  Amount ({activeToken.symbol})
                 </label>
                 <input
                   id="incentive"
                   type="number"
                   min={0.1}
                   step={0.1}
-                  value={incentiveAlph}
-                  onChange={(e) => setIncentiveAlph(e.target.value)}
+                  value={incentiveAmount}
+                  onChange={(e) => setIncentiveAmount(e.target.value)}
                   className="w-full px-3 py-2 text-center text-base rounded-lg border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
                 />
               </div>
               <button
                 onClick={handleIncentivize}
-                disabled={!!ongoingTxId || !incentiveAlph || parseFloat(incentiveAlph) <= 0}
+                disabled={!!ongoingTxId || !incentiveAmount || parseFloat(incentiveAmount) <= 0}
                 className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Add
@@ -208,17 +226,22 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
         <>
           <p className="text-gray-400 text-center text-sm">No active chain. Be the first to start one!</p>
           <div className="w-full max-w-xs flex flex-col gap-4 p-5 bg-gray-50 rounded-2xl border border-gray-100">
+            <TokenSelector
+              tokens={tokenList}
+              selected={selectedToken}
+              onChange={setSelectedToken}
+            />
             <div className="flex flex-col gap-1">
               <label htmlFor="base-entry" className="text-[11px] text-gray-400 uppercase tracking-wider">
-                Entry price (ALPH)
+                Entry price ({selectedToken.symbol})
               </label>
               <input
                 id="base-entry"
                 type="number"
                 min={0.1}
                 step={0.1}
-                value={baseEntryAlph}
-                onChange={(e) => setBaseEntryAlph(e.target.value)}
+                value={baseEntry}
+                onChange={(e) => setBaseEntry(e.target.value)}
                 className="w-full px-3 py-2 text-center text-base rounded-lg border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
               />
             </div>

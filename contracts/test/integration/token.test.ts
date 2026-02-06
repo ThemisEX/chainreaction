@@ -1,8 +1,8 @@
-import { web3, DUST_AMOUNT, ONE_ALPH, prettifyAttoAlphAmount, number256ToBigint, number256ToNumber, NULL_CONTRACT_ADDRESS, sleep } from '@alephium/web3'
-import { expectAssertionError, testNodeWallet } from '@alephium/web3-test'
+import { web3, DUST_AMOUNT, ONE_ALPH, prettifyAttoAlphAmount, number256ToBigint, number256ToNumber, NULL_CONTRACT_ADDRESS, sleep, ALPH_TOKEN_ID } from '@alephium/web3'
+import { expectAssertionError, mintToken, testNodeWallet } from '@alephium/web3-test'
 import { deployToDevnet } from '@alephium/cli'
 import { ChainReaction } from '../../artifacts/ts'
-import { getRandomSigner, transferAlphTo } from '../utils'
+import { getRandomSigner, transferAlphTo, transferTokenTo } from '../utils'
 import { bitTorrent } from 'viem/chains'
 
 describe('integration tests', () => {
@@ -32,16 +32,16 @@ describe('integration tests', () => {
         chainId: 0n,
         currentEntry: 0n,
         endTimestamp: 0n,
-        houseFee: 0n,
         isActive: false,
         lastEntryTimestamp: 0n,
         durationMs: 1000n,
         lastPlayer: NULL_CONTRACT_ADDRESS,
-        multiplierBps: 1000n,  // <-- customize per test
+        multiplierBps: 1000n, // <-- customize per test
         playerCount: 0n,
         pot: 0n,
         durationDecreaseMs: 0n,
-        minDuration: 500n
+        minDuration: 500n,
+        tokenId: ALPH_TOKEN_ID
       }
     })
 
@@ -60,7 +60,8 @@ describe('integration tests', () => {
       args: {
         payment: 10n,
         durationGameMs: 1000n,
-        multiplierGameBps: 1000n
+        multiplierGameBps: 1000n,
+        tokenIdGame: ALPH_TOKEN_ID
       },
       signer: minters[0],
       attoAlphAmount: 10n + ONE_ALPH
@@ -113,16 +114,16 @@ describe('integration tests', () => {
         chainId: 0n,
         currentEntry: 0n,
         endTimestamp: 0n,
-        houseFee: 0n,
         isActive: false,
         lastEntryTimestamp: 0n,
         durationMs: 0n,
         lastPlayer: NULL_CONTRACT_ADDRESS,
-        multiplierBps: 1000n,  // <-- customize per test
+        multiplierBps: 1000n, // <-- customize per test
         playerCount: 0n,
         pot: 0n,
         durationDecreaseMs: 500n,
-        minDuration: 500n
+        minDuration: 500n,
+        tokenId: ALPH_TOKEN_ID
       }
     })
 
@@ -141,7 +142,8 @@ describe('integration tests', () => {
       args: {
         payment: 10n,
         durationGameMs: 2000n,
-        multiplierGameBps: 1000n
+        multiplierGameBps: 1000n,
+        tokenIdGame: ALPH_TOKEN_ID
       },
       signer: minters[0],
       attoAlphAmount: 10n + ONE_ALPH
@@ -196,6 +198,117 @@ describe('integration tests', () => {
 
   }, 20000)
 
+
+    it('start game with custom token id and incentive it', async () => {
+    const signer = await testNodeWallet()
+
+    const tokenTest = await mintToken((await signer.getSelectedAccount()).address,1000000n)
+    await transferTokenTo(minters[0].address,tokenTest.tokenId, 100n)
+
+    const now = Date.now() * 1000
+    const deployed = await ChainReaction.deploy(signer, {
+      initialFields: {
+        baseEntry: 0n,
+        chainId: 0n,
+        currentEntry: 0n,
+        endTimestamp: 0n,
+        isActive: false,
+        lastEntryTimestamp: 0n,
+        durationMs: 0n,
+        lastPlayer: NULL_CONTRACT_ADDRESS,
+        multiplierBps: 1000n, // <-- customize per test
+        playerCount: 0n,
+        pot: 0n,
+        durationDecreaseMs: 500n,
+        minDuration: 500n,
+        tokenId: tokenTest.tokenId
+      }
+    })
+
+    const game = deployed.contractInstance
+    expect(game).toBeDefined()
+
+    if (!game) {
+      throw new Error('Game is undefined')
+    }
+    const initialState = await game.fetchState()
+    const multiplierBps = initialState.fields.multiplierBps
+    expect(multiplierBps).toEqual(1000n)
+    expect(initialState.fields.isActive).toEqual(false)
+
+    await game.transact.startChain({
+      args: {
+        payment: 10n,
+        durationGameMs: 2000n,
+        multiplierGameBps: 1000n,
+        tokenIdGame: tokenTest.tokenId
+      },
+      signer: minters[0],
+      attoAlphAmount: DUST_AMOUNT,
+      tokens: [{
+        id: tokenTest.tokenId,
+        amount: 10n
+      }]
+    })
+
+    await game.transact.incentive({
+      args: {
+        amount: 100n
+      },
+      attoAlphAmount: DUST_AMOUNT,
+      tokens: [{
+        id: tokenTest.tokenId,
+        amount: 100n
+      }],
+      signer: signer
+    })
+
+    let state = await game.fetchState()
+
+    expect(state.asset.alphAmount).toEqual(1n * 10n ** 17n)
+    expect(state.fields.pot).toEqual(100n+10n)
+
+    const nextPayment = (await game.view.getNextEntryPrice()).returns
+    expect(nextPayment).toEqual(11n)
+
+
+    for (let index = 1; index < 4; index++) {
+
+      await transferTokenTo(minters[index].address, tokenTest.tokenId,20n)
+      const payment = (await game.view.getNextEntryPrice()).returns
+
+      state = await game.fetchState()
+
+      await game.transact.joinChain({
+        args: {
+          payment: payment
+        },
+        signer: minters[index],
+       attoAlphAmount: DUST_AMOUNT,
+      tokens: [{
+        id: tokenTest.tokenId,
+        amount: payment
+      }],
+      })
+
+    }
+
+
+    const lastPayment = (await game.view.getNextEntryPrice()).returns
+    await sleep(500)
+
+    await game.transact.endChain({
+      signer: minters[0],
+      attoAlphAmount: DUST_AMOUNT
+    })
+
+    state = await game.fetchState()
+
+    expect(state.asset.alphAmount).toEqual(1n * 10n ** 17n)
+
+
+  }, 20000)
+
   it('start game with players playing', async () => {
     const signer = await testNodeWallet()
 
@@ -206,16 +319,16 @@ describe('integration tests', () => {
         chainId: 0n,
         currentEntry: 0n,
         endTimestamp: 0n,
-        houseFee: 0n,
         isActive: false,
         lastEntryTimestamp: 0n,
         durationMs: 0n,
         lastPlayer: NULL_CONTRACT_ADDRESS,
-        multiplierBps: 1000n,  // <-- customize per test
+        multiplierBps: 1000n, // <-- customize per test
         playerCount: 0n,
         pot: 0n,
         durationDecreaseMs: 500n,
-        minDuration: 500n
+        minDuration: 500n,
+        tokenId: ALPH_TOKEN_ID
       }
     })
 
@@ -234,7 +347,8 @@ describe('integration tests', () => {
       args: {
         payment: 10n,
         durationGameMs: 500n,
-        multiplierGameBps: 1000n
+        multiplierGameBps: 1000n,
+        tokenIdGame: ALPH_TOKEN_ID
       },
       signer: minters[0],
       attoAlphAmount: 10n + ONE_ALPH
@@ -303,16 +417,16 @@ describe('integration tests', () => {
         chainId: 0n,
         currentEntry: 0n,
         endTimestamp: 0n,
-        houseFee: 0n,
         isActive: false,
         lastEntryTimestamp: 0n,
         durationMs: 0n,
         lastPlayer: NULL_CONTRACT_ADDRESS,
-        multiplierBps: 1000n,  // <-- customize per test
+        multiplierBps: 1000n, // <-- customize per test
         playerCount: 0n,
         pot: 0n,
         durationDecreaseMs: 500n,
-        minDuration: 500n
+        minDuration: 500n,
+        tokenId: ALPH_TOKEN_ID
       }
     })
 
@@ -333,7 +447,8 @@ describe('integration tests', () => {
       args: {
         payment: 10n,
         durationGameMs: 100n,
-        multiplierGameBps: 0n
+        multiplierGameBps: 0n,
+        tokenIdGame: ALPH_TOKEN_ID
       }
     }), game.address, 6)
 
@@ -342,7 +457,8 @@ describe('integration tests', () => {
       args: {
         payment: 10n,
         durationGameMs: 2000n,
-        multiplierGameBps: 1000n
+        multiplierGameBps: 1000n,
+        tokenIdGame: ALPH_TOKEN_ID
       },
       signer: minters[0],
       attoAlphAmount: 10n + ONE_ALPH

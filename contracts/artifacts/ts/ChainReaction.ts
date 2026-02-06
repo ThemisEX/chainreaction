@@ -50,9 +50,9 @@ export namespace ChainReactionTypes {
     endTimestamp: bigint;
     durationMs: bigint;
     multiplierBps: bigint;
+    tokenId: HexString;
     durationDecreaseMs: bigint;
     minDuration: bigint;
-    houseFee: bigint;
   };
 
   export type State = ContractState<Fields>;
@@ -88,6 +88,7 @@ export namespace ChainReactionTypes {
         payment: bigint;
         durationGameMs: bigint;
         multiplierGameBps: bigint;
+        tokenIdGame: HexString;
       }>;
       result: CallContractResult<null>;
     };
@@ -140,6 +141,7 @@ export namespace ChainReactionTypes {
         payment: bigint;
         durationGameMs: bigint;
         multiplierGameBps: bigint;
+        tokenIdGame: HexString;
       }>;
       result: SignExecuteScriptTxResult;
     };
@@ -212,7 +214,12 @@ class Factory extends ContractFactory<
     startChain: async (
       params: TestContractParamsWithoutMaps<
         ChainReactionTypes.Fields,
-        { payment: bigint; durationGameMs: bigint; multiplierGameBps: bigint }
+        {
+          payment: bigint;
+          durationGameMs: bigint;
+          multiplierGameBps: bigint;
+          tokenIdGame: HexString;
+        }
       >
     ): Promise<TestContractResultWithoutMaps<null>> => {
       return testMethod(this, "startChain", params, getContractByCodeHash);
@@ -290,7 +297,7 @@ export const ChainReaction = new Factory(
   Contract.fromJson(
     ChainReactionContractJson,
     "",
-    "d65bc59454d1308de7cca9024f0c054dfd01d20b051b2c732b01c9142cd25f4d",
+    "c961cfdbd9de6d35595bcf9ad838f5e917c7eac370ae998ec27f9b75bbf1eb81",
     []
   )
 );
