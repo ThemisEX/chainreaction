@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { FC } from 'react'
 import { BigButton } from './BigButton'
 import { CountdownTimer } from './CountdownTimer'
@@ -40,6 +40,8 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const [tokenList, setTokenList] = useState<TokenInfo[]>([ALPH_TOKEN])
   const [userBalance, setUserBalance] = useState<bigint | null>(null)
   const [copiedShare, setCopiedShare] = useState<'embed' | null>(null)
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const wasLastPlayerRef = useRef(false)
 
   useEffect(() => {
     if (account?.address) {
@@ -62,6 +64,22 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const isLastPlayer = !ongoingTxId && account && gameState
     ? account.address === gameState.lastPlayer
     : false
+
+  useEffect(() => {
+    if (wasLastPlayerRef.current && !isLastPlayer && soundEnabled) {
+      const ctx = new AudioContext()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = 880
+      gain.gain.value = 0.3
+      osc.start()
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5)
+      osc.stop(ctx.currentTime + 0.5)
+    }
+    wasLastPlayerRef.current = isLastPlayer
+  }, [isLastPlayer, soundEnabled])
 
   const hasEnoughBalance = userBalance !== null && gameState
     ? userBalance >= gameState.nextEntryPrice
@@ -358,10 +376,17 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
 
       <div className="flex gap-3 mt-2">
         <button
+          onClick={() => setSoundEnabled(prev => !prev)}
+          className={`text-xs transition-colors ${soundEnabled ? 'text-emerald-500' : 'text-gray-400 hover:text-emerald-500'}`}
+        >
+          {soundEnabled ? 'Sound on' : 'Sound off'}
+        </button>
+        <span className="text-gray-300">|</span>
+        <button
           onClick={() => {
             const text = gameState?.isActive
-              ? `Chain Reaction on @alaboratory — pot is ${fmt(gameState.pot)} ${activeToken.symbol} and growing! Be the last player standing.`
-              : 'Chain Reaction on @alaboratory — be the last player standing and win the pot!'
+              ? `Chain Reaction on @alephium — pot is ${fmt(gameState.pot)} \$${activeToken.symbol} and growing! Be the last player standing.`
+              : 'Chain Reaction on @alephium — be the last player standing and win the pot!'
             const url = window.location.href
             window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank')
           }}
