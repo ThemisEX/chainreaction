@@ -11,7 +11,7 @@ import { web3 } from '@alephium/web3'
 import { useChainReaction } from '@/hooks/useChainReaction'
 import { GameConfig } from '@/services/utils'
 import { startChain, joinChain, endChain, incentivize, GameState } from '@/services/game.service'
-import { TokenInfo, ALPH_TOKEN, fetchTokenList, findTokenById, formatTokenAmount } from '@/services/tokenList'
+import { TokenInfo, ALPH_TOKEN, fetchWalletTokens, findTokenById, formatTokenAmount } from '@/services/tokenList'
 
 type UIState = 'loading' | 'no-chain' | 'active' | 'claimable' | 'error'
 
@@ -40,8 +40,12 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const [tokenList, setTokenList] = useState<TokenInfo[]>([ALPH_TOKEN])
 
   useEffect(() => {
-    fetchTokenList().then(setTokenList)
-  }, [])
+    if (account?.address) {
+      fetchWalletTokens(account.address).then(setTokenList)
+    } else {
+      setTokenList([ALPH_TOKEN])
+    }
+  }, [account?.address])
 
   const uiState = deriveUIState(gameState, isLoading, error)
 

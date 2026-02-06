@@ -1,3 +1,5 @@
+import { web3 } from '@alephium/web3'
+
 export interface TokenInfo {
   id: string
   name: string
@@ -13,7 +15,7 @@ const TOKEN_LIST_URLS: Record<string, string> = {
 
 let cachedTokens: TokenInfo[] | null = null
 
-export async function fetchTokenList(): Promise<TokenInfo[]> {
+async function fetchTokenList(): Promise<TokenInfo[]> {
   if (cachedTokens) return cachedTokens
 
   const network = process.env.NEXT_PUBLIC_NETWORK ?? 'devnet'
@@ -30,12 +32,41 @@ export async function fetchTokenList(): Promise<TokenInfo[]> {
       decimals: t.decimals,
       logoURI: t.logoURI,
     }))
-    // Always include ALPH at the front if not already in the list
     const hasAlph = fetched.some(t => t.id === ALPH_TOKEN.id)
     cachedTokens = hasAlph ? fetched : [ALPH_TOKEN, ...fetched]
     return cachedTokens
   } catch {
-    // Fallback: return just ALPH
+    return [ALPH_TOKEN]
+  }
+}
+
+export async function fetchWalletTokens(address: string): Promise<TokenInfo[]> {
+  const allTokens = await fetchTokenList()
+  const tokenMap = new Map(allTokens.map(t => [t.id, t]))
+
+  try {
+    const provider = web3.getCurrentNodeProvider()
+    const balance = await provider.addresses.getAddressesAddressBalance(address)
+
+    const result: TokenInfo[] = []
+
+    // ALPH is always available if the user has balance
+    if (BigInt(balance.balance) > 0n) {
+      result.push(tokenMap.get(ALPH_TOKEN.id) ?? ALPH_TOKEN)
+    }
+
+    // Add tokens the wallet holds that we have metadata for
+    if (balance.tokenBalances) {
+      for (const tb of balance.tokenBalances) {
+        if (BigInt(tb.amount) > 0n) {
+          const info = tokenMap.get(tb.id)
+          if (info) result.push(info)
+        }
+      }
+    }
+
+    return result.length > 0 ? result : [ALPH_TOKEN]
+  } catch {
     return [ALPH_TOKEN]
   }
 }
