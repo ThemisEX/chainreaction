@@ -7,6 +7,7 @@ export interface GameState {
   lastPlayer: string
   lastEntryTimestamp: bigint
   pot: bigint
+  boostAmount: bigint
   isActive: boolean
   playerCount: bigint
   nextEntryPrice: bigint
@@ -47,6 +48,7 @@ export async function fetchGameState(contract: ChainReactionInstance): Promise<G
     lastPlayer: fields.lastPlayer,
     lastEntryTimestamp: fields.lastEntryTimestamp,
     pot: fields.pot,
+    boostAmount: fields.boostAmount,
     isActive: fields.isActive,
     playerCount: fields.playerCount,
     nextEntryPrice: nextEntryPriceResult.returns,

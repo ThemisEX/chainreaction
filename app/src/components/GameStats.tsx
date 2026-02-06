@@ -6,7 +6,7 @@ import { formatTokenAmount } from '@/services/tokenList'
 
 interface GameStatsProps {
   pot: bigint
-  totalBoosted: bigint
+  boostAmount: bigint
   entryPrice: bigint
   lastPlayer: string
   playerCount: bigint
@@ -17,7 +17,7 @@ interface GameStatsProps {
 }
 
 export const GameStats: FC<GameStatsProps> = ({
-  pot, totalBoosted, entryPrice, lastPlayer, playerCount, multiplierBps, currentUserAddress, tokenSymbol, tokenDecimals
+  pot, boostAmount, entryPrice, lastPlayer, playerCount, multiplierBps, currentUserAddress, tokenSymbol, tokenDecimals
 }) => {
   const multiplierPct = Number(multiplierBps) / 100
   const isCurrentUserLast = currentUserAddress === lastPlayer
@@ -27,9 +27,9 @@ export const GameStats: FC<GameStatsProps> = ({
       <div className="flex flex-col items-center p-5 bg-gray-50 rounded-xl border border-gray-100">
         <span className="text-[11px] text-gray-400 uppercase tracking-wider">Pot</span>
         <span className="text-2xl font-bold text-gray-900 mt-1">{formatTokenAmount(pot, tokenDecimals)} {tokenSymbol}</span>
-        {totalBoosted > 0n && (
+        {boostAmount > 0n && (
           <span className="text-xs text-emerald-500 mt-1">
-            incl. {formatTokenAmount(totalBoosted, tokenDecimals)} {tokenSymbol} boosted
+            incl. {formatTokenAmount(boostAmount, tokenDecimals)} {tokenSymbol} boosted
           </span>
         )}
       </div>

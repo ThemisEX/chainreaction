@@ -84,19 +84,6 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
     return findTokenById(tokenList, gameState.tokenId) ?? ALPH_TOKEN
   }, [gameState?.tokenId, tokenList])
 
-  // Compute boosted amount = pot minus sum of all entry fees
-  const totalBoosted = useMemo(() => {
-    if (!gameState || !gameState.isActive) return 0n
-    let entrySum = 0n
-    let price = gameState.baseEntry
-    const multiplier = 10000n + gameState.multiplierBps
-    for (let i = 0n; i < gameState.playerCount; i++) {
-      entrySum += price
-      price = price * multiplier / 10000n
-    }
-    return gameState.pot > entrySum ? gameState.pot - entrySum : 0n
-  }, [gameState?.pot, gameState?.baseEntry, gameState?.multiplierBps, gameState?.playerCount, gameState?.isActive])
-
   const handleStartChain = async () => {
     if (!signer) { onConnectRequest(); return }
     setTxError(undefined)
@@ -264,7 +251,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
         <>
           <GameStats
             pot={gameState.pot}
-            totalBoosted={totalBoosted}
+            boostAmount={gameState.boostAmount}
             entryPrice={gameState.nextEntryPrice}
             lastPlayer={gameState.lastPlayer}
             playerCount={gameState.playerCount}
