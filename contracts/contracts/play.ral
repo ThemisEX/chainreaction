@@ -159,7 +159,7 @@ Contract ChainReaction(
             return baseEntry
         }
        // return currentEntry + (currentEntry * multiplierBps / 10000)
-       return currentEntry + (pot * multiplierBps / 10000)
+       return currentEntry + (currentEntry * multiplierBps / 10000)
     }
 
 }

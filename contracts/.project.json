@@ -14,9 +14,9 @@
   "infos": {
     "ChainReaction": {
       "sourceFile": "play.ral",
-      "sourceCodeHash": "a29141f7f8fdf223641dfbbf639d8519100ba2f3cac914715351d310fb6f8349",
+      "sourceCodeHash": "3bab9a101375cff48d4f8ab1d56ed5b812deca6018d642aa307a5fa6578af654",
       "bytecodeDebugPatch": "",
-      "codeHashDebug": "a0ec040c29556615ebd7aead19a51e192f84a1f280c0bc4369974840cbf3dbf8"
+      "codeHashDebug": "5fa5e7797dfe65a2b1bebca63c667caaf46b3ef332c1168e1109a97fc72f53ec"
     }
   }
 }
