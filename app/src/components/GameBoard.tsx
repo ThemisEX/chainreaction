@@ -39,6 +39,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const [selectedToken, setSelectedToken] = useState<TokenInfo>(ALPH_TOKEN)
   const [tokenList, setTokenList] = useState<TokenInfo[]>([ALPH_TOKEN])
   const [userBalance, setUserBalance] = useState<bigint | null>(null)
+  const [copiedShare, setCopiedShare] = useState<'embed' | null>(null)
 
   useEffect(() => {
     if (account?.address) {
@@ -207,10 +208,13 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
                 ? gameState.durationMs - decrease
                 : gameState.minDuration
               const clamped = next < gameState.minDuration ? gameState.minDuration : next
-              const totalSec = Number(clamped) / 1000
-              const m = Math.floor(totalSec / 60)
-              const s = Math.floor(totalSec % 60)
-              return s > 0 ? `${m}m ${s}s` : `${m}m`
+              const totalSec = Math.ceil(Number(clamped) / 1000)
+              const h = Math.floor(totalSec / 3600)
+              const m = Math.floor((totalSec % 3600) / 60)
+              const s = totalSec % 60
+              return h > 0
+                ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+                : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
             })()}
           </p>
         </>
@@ -352,7 +356,34 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
         </div>
       </details>
 
-      <p className="text-xs text-gray-400 mt-4">
+      <div className="flex gap-3 mt-2">
+        <button
+          onClick={() => {
+            const text = gameState?.isActive
+              ? `Chain Reaction on @alaboratory — pot is ${fmt(gameState.pot)} ${activeToken.symbol} and growing! Be the last player standing.`
+              : 'Chain Reaction on @alaboratory — be the last player standing and win the pot!'
+            const url = window.location.href
+            window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank')
+          }}
+          className="text-xs text-gray-400 hover:text-emerald-500 transition-colors"
+        >
+          Share on X
+        </button>
+        <span className="text-gray-300">|</span>
+        <button
+          onClick={() => {
+            const code = `<iframe src="${window.location.href}" width="450" height="700" frameborder="0" style="border-radius:16px;"></iframe>`
+            navigator.clipboard.writeText(code)
+            setCopiedShare('embed')
+            setTimeout(() => setCopiedShare(null), 2000)
+          }}
+          className="text-xs text-gray-400 hover:text-emerald-500 transition-colors"
+        >
+          {copiedShare === 'embed' ? 'Copied!' : 'Embed'}
+        </button>
+      </div>
+
+      <p className="text-xs text-gray-400 mt-2">
         Built by{' '}
         <a href="https://notrustverify.ch" target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-600 underline">
           No Trust Verify
