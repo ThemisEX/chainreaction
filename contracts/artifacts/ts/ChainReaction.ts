@@ -298,7 +298,7 @@ export const ChainReaction = new Factory(
   Contract.fromJson(
     ChainReactionContractJson,
     "",
-    "5fa5e7797dfe65a2b1bebca63c667caaf46b3ef332c1168e1109a97fc72f53ec",
+    "3bb8099fef2d4d3793db878df606115638ea1c5dd7af5727245533874142bca9",
     []
   )
 );

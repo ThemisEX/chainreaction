@@ -9,14 +9,14 @@
     "ignoreCheckExternalCallerWarnings": false,
     "ignoreUnusedFunctionReturnWarnings": false,
     "skipAbstractContractCheck": false,
-    "skipTests": true
+    "skipTests": false
   },
   "infos": {
     "ChainReaction": {
       "sourceFile": "play.ral",
-      "sourceCodeHash": "3bab9a101375cff48d4f8ab1d56ed5b812deca6018d642aa307a5fa6578af654",
+      "sourceCodeHash": "c848aa53d69de155c74c3e525b022aa5dd98204994df68368e577e602a3d30ee",
       "bytecodeDebugPatch": "",
-      "codeHashDebug": "5fa5e7797dfe65a2b1bebca63c667caaf46b3ef332c1168e1109a97fc72f53ec"
+      "codeHashDebug": "3bb8099fef2d4d3793db878df606115638ea1c5dd7af5727245533874142bca9"
     }
   }
 }
