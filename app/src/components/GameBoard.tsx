@@ -373,7 +373,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
         <button
           onClick={() => {
             const text = gameState?.isActive
-              ? `Chain Reaction on @alephium — pot is ${fmt(gameState.pot)} \$${activeToken.symbol} and growing! Be the last player standing.`
+              ? `Chain Reaction on @alephium — pot is ${fmt(gameState.pot + gameState.boostAmount)} \$${activeToken.symbol} and growing! Be the last player standing.`
               : 'Chain Reaction on @alephium — be the last player standing and win the pot!'
             const url = window.location.href
             window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank')

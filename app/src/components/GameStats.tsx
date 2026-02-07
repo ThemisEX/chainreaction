@@ -21,12 +21,13 @@ export const GameStats: FC<GameStatsProps> = ({
 }) => {
   const multiplierPct = Number(multiplierBps) / 100
   const isCurrentUserLast = currentUserAddress === lastPlayer
+  const totalPrize = pot + boostAmount
 
   return (
     <div className="flex flex-col gap-3 w-full max-w-sm">
       <div className="flex flex-col items-center p-5 bg-gray-50 rounded-xl border border-gray-100">
         <span className="text-[11px] text-gray-400 uppercase tracking-wider">Pot</span>
-        <span className="text-2xl font-bold text-gray-900 mt-1">{formatTokenAmount(pot, tokenDecimals)} {tokenSymbol}</span>
+        <span className="text-2xl font-bold text-gray-900 mt-1">{formatTokenAmount(totalPrize, tokenDecimals)} {tokenSymbol}</span>
         {boostAmount > 0n && (
           <span className="text-xs text-emerald-500 mt-1">
             incl. {formatTokenAmount(boostAmount, tokenDecimals)} {tokenSymbol} boosted
