@@ -124,6 +124,7 @@ Contract ChainReaction(
         // Reset for next chain
         isActive = false
         pot = 0
+        boostAmount = 0
         playerCount = 0
         currentEntry = 0
     }
