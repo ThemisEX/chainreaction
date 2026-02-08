@@ -31,6 +31,14 @@ export const NavBar = forwardRef<HTMLDivElement>((_, ref) => {
           >
             Leaderboard
           </Link>
+          <Link
+            href="/how-to-play"
+            className={`text-sm font-medium transition-colors ${
+              pathname === '/how-to-play' ? 'text-emerald-600' : 'text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            How to Play
+          </Link>
         </div>
       </div>
       <div ref={ref}>

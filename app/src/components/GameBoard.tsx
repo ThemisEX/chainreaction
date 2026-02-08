@@ -393,7 +393,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
                   step={1}
                   value={burnPct}
                   onChange={(e) => setBurnPct(Number(e.target.value))}
-                  className="flex-1 accent-red-500"
+                  className="flex-1 burn-slider"
                 />
                 <span className="text-base font-bold text-red-600 min-w-[4ch] text-right">{burnPct}%</span>
               </div>
@@ -407,20 +407,6 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
           {error}
         </p>
       )}
-
-      <details className="w-full max-w-sm mt-2">
-        <summary className="text-sm text-gray-400 cursor-pointer hover:text-emerald-500 transition-colors text-center select-none">
-          How to play
-        </summary>
-        <div className="mt-3 text-sm text-gray-500 space-y-2 p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <p><span className="font-semibold text-gray-700">1. Start a chain</span> — Pick a token, set the entry price, countdown duration, price increase, and burn rate. You become the first player.</p>
-          <p><span className="font-semibold text-gray-700">2. Enter the chain</span> — Each new player pays a higher entry fee (previous price + the % increase). Every play resets the countdown.</p>
-          <p><span className="font-semibold text-gray-700">3. The clock tightens</span> — The countdown shrinks with each player, making the game more intense. Once it reaches 1 minute, each new play resets the timer back to 1 minute instead of shrinking further.</p>
-          <p><span className="font-semibold text-gray-700">4. Token burning</span> — If a burn rate is set, a percentage of each entry fee is permanently burned (removed from circulation for alphtoken). The rest goes to the pot.</p>
-          <p><span className="font-semibold text-gray-700">5. Last player wins</span> — When the timer runs out, the last person who joined wins the entire pot. Anyone can trigger the payout.</p>
-          <p className="text-gray-400 text-xs pt-1">You can also boost the pot at any time to make the prize more attractive without resetting the timer.</p>
-        </div>
-      </details>
 
       <div className="flex gap-3 mt-2">
         <button
