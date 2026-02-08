@@ -6,6 +6,15 @@ interface CountdownTimerProps {
   endTimestamp: bigint
 }
 
+function getUrgency(totalSeconds: number): { color: string; pulse: boolean } {
+  if (totalSeconds <= 0) return { color: 'text-amber-500', pulse: false }
+  if (totalSeconds <= 10) return { color: 'text-red-500', pulse: true }
+  if (totalSeconds <= 30) return { color: 'text-red-500', pulse: false }
+  if (totalSeconds <= 60) return { color: 'text-orange-500', pulse: false }
+  if (totalSeconds <= 300) return { color: 'text-amber-500', pulse: false }
+  return { color: 'text-gray-900', pulse: false }
+}
+
 export const CountdownTimer: FC<CountdownTimerProps> = ({ endTimestamp }) => {
   const [remainingMs, setRemainingMs] = useState<number>(0)
 
@@ -25,7 +34,7 @@ export const CountdownTimer: FC<CountdownTimerProps> = ({ endTimestamp }) => {
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const seconds = totalSeconds % 60
-  const isUrgent = totalSeconds <= 10 && totalSeconds > 0
+  const { color, pulse } = getUrgency(totalSeconds)
 
   const timeDisplay = hours > 0
     ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
@@ -35,11 +44,11 @@ export const CountdownTimer: FC<CountdownTimerProps> = ({ endTimestamp }) => {
     <div className="flex flex-col items-center gap-1">
       <span className="text-xs text-gray-400 uppercase tracking-widest">Time Remaining</span>
       {remainingMs > 0 ? (
-        <span className={`text-4xl font-bold tabular-nums transition-colors ${isUrgent ? 'text-red-500 animate-pulse' : 'text-gray-900'}`}>
+        <span className={`text-5xl font-bold tabular-nums transition-colors duration-500 ${color} ${pulse ? 'animate-pulse' : ''}`}>
           {timeDisplay}
         </span>
       ) : (
-        <span className="text-xl font-bold text-amber-500 uppercase">EXPIRED</span>
+        <span className="text-2xl font-bold text-amber-500 uppercase">EXPIRED</span>
       )}
     </div>
   )

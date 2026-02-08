@@ -274,33 +274,33 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
             tokenDecimals={activeToken.decimals}
           />
           <details className="w-full max-w-sm">
-            <summary className="text-sm text-gray-400 cursor-pointer hover:text-emerald-500 transition-colors text-center select-none">
-              Boost the pot
-            </summary>
-            <div className="mt-3 flex gap-2 items-end">
-              <div className="flex-1 flex flex-col gap-1">
-                <label htmlFor="incentive" className="text-[11px] text-gray-400 uppercase tracking-wider">
-                  Amount ({activeToken.symbol})
-                </label>
-                <input
-                  id="incentive"
-                  type="number"
-                  min={0.1}
-                  step={0.1}
-                  value={incentiveAmount}
-                  onChange={(e) => setIncentiveAmount(e.target.value)}
-                  className="w-full px-3 py-2 text-center text-base rounded-lg border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-                />
-              </div>
-              <button
-                onClick={handleIncentivize}
-                disabled={!!ongoingTxId || !incentiveAmount || parseFloat(incentiveAmount) <= 0}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Add
-              </button>
+          <summary className="text-sm text-gray-400 cursor-pointer hover:text-emerald-500 transition-colors text-center select-none">
+            Boost the pot
+          </summary>
+          <div className="mt-3 flex gap-2 items-end">
+            <div className="flex-1 flex flex-col gap-1">
+              <label htmlFor="incentive" className="text-[11px] text-gray-400 uppercase tracking-wider">
+                Amount ({activeToken.symbol})
+              </label>
+              <input
+                id="incentive"
+                type="number"
+                min={0.1}
+                step={0.1}
+                value={incentiveAmount}
+                onChange={(e) => setIncentiveAmount(e.target.value)}
+                className="w-full px-3 py-2 text-center text-base rounded-lg border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              />
             </div>
-          </details>
+            <button
+              onClick={handleIncentivize}
+              disabled={!!ongoingTxId || !incentiveAmount || parseFloat(incentiveAmount) <= 0}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Add
+            </button>
+          </div>
+        </details>
         </>
       )}
 
