@@ -11,7 +11,7 @@ export const NavBar = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <nav className="w-full flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-gray-100">
       <div className="flex items-center gap-3 sm:gap-6">
-        <Link href="/" className="text-lg font-bold text-gray-900 whitespace-nowrap">
+        <Link href="/" className="text-lg font-bold text-gray-900 whitespace-nowrap hidden sm:block">
           Chain Reaction
         </Link>
         <div className="flex gap-2 sm:gap-4">
