@@ -102,6 +102,8 @@ Contract ChainReaction(
 
         let amountToBurn = requiredEntry * burnBps / 10000
         burnedAmount = burnedAmount + amountToBurn
+
+        emit Debug(`burned ${burnedAmount}`)
         let totalPayment = requiredEntry - amountToBurn
         if tokenId != ALPH {
             burnToken!(selfAddress!(), tokenId, amountToBurn)
