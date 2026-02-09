@@ -305,8 +305,8 @@ class Factory extends ContractFactory<
 export const ChainReaction = new Factory(
   Contract.fromJson(
     ChainReactionContractJson,
-    "=11-1+f=2-2+68=3-1+f=2-2+99=3-1+f=3-1+f=279-1+9=152+a00e7e02076275726e65642000=500",
-    "ac25de64a2114c39f1dba478a2fd7a560a778be6247d9bc6ecd1929f35b793af",
+    "",
+    "5a136385437d46408c62daca51a9521ab8674e8c2702015a7df86f798f5e757e",
     []
   )
 );

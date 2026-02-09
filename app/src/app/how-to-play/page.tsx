@@ -25,7 +25,7 @@ export default function HowToPlayPage() {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">4. Token burning</h2>
-            <p className="mt-1 text-gray-500">If a burn rate is set, a percentage of each entry fee is permanently burned (removed from circulation). The rest goes to the pot.</p>
+            <p className="mt-1 text-gray-500">If a burn rate is set, a percentage of each entry fee is permanently burned. The rest goes to the pot.</p>
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">5. Last player wins</h2>

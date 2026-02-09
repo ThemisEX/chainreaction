@@ -10,7 +10,7 @@ import { useWallet } from '@alephium/web3-react'
 import { web3 } from '@alephium/web3'
 import { useChainReaction } from '@/hooks/useChainReaction'
 import { GameConfig } from '@/services/utils'
-import { startChain, joinChain, endChain, incentivize, GameState } from '@/services/game.service'
+import { startChain, joinChain, endChain, incentivize, GameState, normalizeAddress } from '@/services/game.service'
 import { TokenInfo, ALPH_TOKEN, fetchWalletTokens, fetchTokenBalance, findTokenById, formatTokenAmount } from '@/services/tokenList'
 
 type UIState = 'loading' | 'no-chain' | 'active' | 'claimable' | 'error'
@@ -65,7 +65,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const uiState = deriveUIState(gameState, isLoading, error)
 
   const isLastPlayer = !ongoingTxId && account && gameState
-    ? account.address === gameState.lastPlayer
+    ? normalizeAddress(account.address) === normalizeAddress(gameState.lastPlayer)
     : false
 
   useEffect(() => {

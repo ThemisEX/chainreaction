@@ -1,7 +1,7 @@
 'use client'
 
 import React, { FC } from 'react'
-import { shortenAddress } from '@/services/game.service'
+import { shortenAddress, normalizeAddress } from '@/services/game.service'
 import { formatTokenAmount } from '@/services/tokenList'
 
 interface GameStatsProps {
@@ -23,7 +23,7 @@ export const GameStats: FC<GameStatsProps> = ({
 }) => {
   const multiplierPct = Number(multiplierBps) / 100
   const burnPct = Number(burnBps) / 100
-  const isCurrentUserLast = currentUserAddress === lastPlayer
+  const isCurrentUserLast = currentUserAddress ? normalizeAddress(currentUserAddress) === normalizeAddress(lastPlayer) : false
   const totalPrize = pot + boostAmount
 
   return (

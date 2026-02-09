@@ -29,7 +29,7 @@ function isAlph(tokenId: string): boolean {
 
 function buildTxParams(tokenId: string, payment: bigint) {
   if (isAlph(tokenId)) {
-    return { attoAlphAmount: payment + ONE_ALPH }
+    return { attoAlphAmount: payment + 5n*DUST_AMOUNT }
   }
   return {
     attoAlphAmount: MINIMAL_CONTRACT_DEPOSIT + DUST_AMOUNT,
@@ -105,7 +105,7 @@ export async function endChain(
 ): Promise<{ txId: string }> {
   const result = await contract.transact.endChain({
     signer,
-    attoAlphAmount: isAlph(tokenId) ? ONE_ALPH : ONE_ALPH,
+    attoAlphAmount: isAlph(tokenId) ? 5n*DUST_AMOUNT : 5n*DUST_AMOUNT,
   })
   return { txId: result.txId }
 }
@@ -128,7 +128,13 @@ export function formatAlph(attoAlph: bigint): string {
   return prettifyAttoAlphAmount(attoAlph) ?? '0'
 }
 
+export function normalizeAddress(address: string): string {
+  const idx = address.indexOf(':')
+  return idx >= 0 ? address.slice(0, idx) : address
+}
+
 export function shortenAddress(address: string): string {
-  if (address.length <= 12) return address
-  return `${address.slice(0, 6)}...${address.slice(-4)}`
+  const clean = normalizeAddress(address)
+  if (clean.length <= 12) return clean
+  return `${clean.slice(0, 6)}...${clean.slice(-4)}`
 }

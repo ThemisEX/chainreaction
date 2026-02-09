@@ -2,7 +2,7 @@
 
 import React, { FC, useState } from 'react'
 import { PlayerStats, LeaderboardSort } from '@/hooks/useLeaderboard'
-import { formatAlph, shortenAddress } from '@/services/game.service'
+import { formatAlph, shortenAddress, normalizeAddress } from '@/services/game.service'
 
 interface LeaderboardProps {
   data: PlayerStats[]
@@ -65,7 +65,7 @@ export const Leaderboard: FC<LeaderboardProps> = ({ data, isLoading, currentUser
       <div className="flex flex-col gap-2">
         {sorted.map((player, i) => {
           const rank = i + 1
-          const isCurrentUser = currentUserAddress === player.address
+          const isCurrentUser = currentUserAddress ? normalizeAddress(currentUserAddress) === normalizeAddress(player.address) : false
           return (
             <div
               key={player.address}
