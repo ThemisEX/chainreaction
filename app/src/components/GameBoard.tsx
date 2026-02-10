@@ -6,6 +6,7 @@ import { BigButton } from './BigButton'
 import { CountdownTimer } from './CountdownTimer'
 import { GameStats } from './GameStats'
 import { TokenSelector } from './TokenSelector'
+import { PriceChart } from './PriceChart'
 import { useWallet } from '@alephium/web3-react'
 import { web3 } from '@alephium/web3'
 import { useChainReaction } from '@/hooks/useChainReaction'
@@ -278,6 +279,20 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
             tokenSymbol={activeToken.symbol}
             tokenDecimals={activeToken.decimals}
           />
+          <details className="w-full max-w-sm">
+            <summary className="text-sm text-gray-400 cursor-pointer hover:text-emerald-500 transition-colors text-center select-none">
+              Price curve
+            </summary>
+            <div className="mt-3">
+              <PriceChart
+                baseEntry={gameState.baseEntry}
+                multiplierBps={gameState.multiplierBps}
+                playerCount={gameState.playerCount}
+                tokenSymbol={activeToken.symbol}
+                tokenDecimals={activeToken.decimals}
+              />
+            </div>
+          </details>
           <details className="w-full max-w-sm">
           <summary className="text-sm text-gray-400 cursor-pointer hover:text-emerald-500 transition-colors text-center select-none">
             Boost the pot
