@@ -21,6 +21,7 @@ interface PriceChartProps {
   playerCount: bigint
   tokenSymbol: string
   tokenDecimals: number
+  preview?: boolean
 }
 
 function computePrices(baseEntry: bigint, multiplierBps: bigint, count: number): bigint[] {
@@ -32,9 +33,44 @@ function computePrices(baseEntry: bigint, multiplierBps: bigint, count: number):
   return prices
 }
 
-export const PriceChart: FC<PriceChartProps> = ({ baseEntry, multiplierBps, playerCount, tokenSymbol, tokenDecimals }) => {
-  const { labels, pastData, futureData, pointColors, pointRadii } = useMemo(() => {
+const PREVIEW_MILESTONES = new Set([1, 10, 20, 50, 100])
+
+export const PriceChart: FC<PriceChartProps> = ({ baseEntry, multiplierBps, playerCount, tokenSymbol, tokenDecimals, preview }) => {
+  const chartData = useMemo(() => {
     const pc = Number(playerCount)
+
+    if (preview) {
+      const totalPlayers = 100
+      const allPrices = computePrices(baseEntry, multiplierBps, totalPlayers)
+
+      const labels = allPrices.map((_, i) => {
+        const num = i + 1
+        return PREVIEW_MILESTONES.has(num) ? `#${num}` : ''
+      })
+
+      const values = allPrices.map(p => Number(p) / 10 ** tokenDecimals)
+
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'Price',
+            data: values,
+            borderColor: '#93c5fd',
+            borderDash: [4, 4],
+            backgroundColor: 'rgba(147, 197, 253, 0.08)',
+            pointBackgroundColor: allPrices.map((_, i) => PREVIEW_MILESTONES.has(i + 1) ? '#3b82f6' : 'transparent'),
+            pointRadius: allPrices.map((_, i) => PREVIEW_MILESTONES.has(i + 1) ? 4 : 0),
+            pointHoverRadius: 4,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3,
+          },
+        ],
+      }
+    }
+
+    // Active game mode: 10 past + 10 future
     const totalPlayers = pc + 10
     const allPrices = computePrices(baseEntry, multiplierBps, totalPlayers)
 
@@ -43,104 +79,112 @@ export const PriceChart: FC<PriceChartProps> = ({ baseEntry, multiplierBps, play
     const slice = allPrices.slice(startIdx, endIdx)
 
     const labels = slice.map((_, i) => `#${startIdx + i + 1}`)
+    const nextLocalIdx = pc - startIdx
 
-    // Split into past (including "next") and future datasets
-    const nextLocalIdx = pc - startIdx // index of the "next" entry in our slice
     const pastData = slice.map((p, i) => i <= nextLocalIdx ? Number(p) / 10 ** tokenDecimals : null)
     const futureData = slice.map((p, i) => i >= nextLocalIdx ? Number(p) / 10 ** tokenDecimals : null)
 
     const pointColors = slice.map((_, i) => {
-      if (i === nextLocalIdx) return '#10b981' // emerald-500 for "next"
-      if (i < nextLocalIdx) return '#9ca3af' // gray-400 for past
-      return '#93c5fd' // blue-300 for future
+      if (i === nextLocalIdx) return '#10b981'
+      if (i < nextLocalIdx) return '#9ca3af'
+      return '#93c5fd'
     })
 
     const pointRadii = slice.map((_, i) => i === nextLocalIdx ? 6 : 3)
 
-    return { labels, pastData, futureData, pointColors, pointRadii }
-  }, [baseEntry, multiplierBps, playerCount, tokenDecimals])
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Past',
+          data: pastData,
+          borderColor: '#9ca3af',
+          backgroundColor: 'rgba(156, 163, 175, 0.1)',
+          pointBackgroundColor: pointColors,
+          pointRadius: pointRadii,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          spanGaps: false,
+        },
+        {
+          label: 'Future',
+          data: futureData,
+          borderColor: '#93c5fd',
+          borderDash: [4, 4],
+          backgroundColor: 'rgba(147, 197, 253, 0.08)',
+          pointBackgroundColor: pointColors,
+          pointRadius: pointRadii,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          spanGaps: false,
+        },
+      ],
+    }
+  }, [baseEntry, multiplierBps, playerCount, tokenDecimals, preview])
 
-  const data = {
-    labels,
-    datasets: [
-      {
-        label: 'Past',
-        data: pastData,
-        borderColor: '#9ca3af',
-        backgroundColor: 'rgba(156, 163, 175, 0.1)',
-        pointBackgroundColor: pointColors,
-        pointRadius: pointRadii,
-        pointHoverRadius: 6,
-        borderWidth: 2,
-        fill: true,
-        tension: 0.3,
-        spanGaps: false,
-      },
-      {
-        label: 'Future',
-        data: futureData,
-        borderColor: '#93c5fd',
-        borderDash: [4, 4],
-        backgroundColor: 'rgba(147, 197, 253, 0.08)',
-        pointBackgroundColor: pointColors,
-        pointRadius: pointRadii,
-        pointHoverRadius: 6,
-        borderWidth: 2,
-        fill: true,
-        tension: 0.3,
-        spanGaps: false,
-      },
-    ],
-  }
+  const options = useMemo(() => {
+    const formatTick = (value: number | string) => {
+      const num = typeof value === 'string' ? parseFloat(value) : value
+      if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`
+      if (num >= 1000) return `${(num / 1000).toFixed(1)}k`
+      return String(num)
+    }
 
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      intersect: false,
-      mode: 'index' as const,
-    },
-    plugins: {
-      tooltip: {
-        callbacks: {
-          label: (ctx: { raw: unknown }) => {
-            const val = ctx.raw as number | null
-            if (val == null) return ''
-            // Convert back to bigint for precise formatting
-            const bigVal = BigInt(Math.round(val * 10 ** tokenDecimals))
-            return `${formatTokenAmount(bigVal, tokenDecimals)} ${tokenSymbol}`
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        intersect: false,
+        mode: 'index' as const,
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (ctx: { raw: unknown }) => {
+              const val = ctx.raw as number | null
+              if (val == null) return ''
+              const bigVal = BigInt(Math.round(val * 10 ** tokenDecimals))
+              return `${formatTokenAmount(bigVal, tokenDecimals)} ${tokenSymbol}`
+            },
+            title: (items: { label: string }[]) => {
+              const label = items[0]?.label
+              if (label) return `Player ${label}`
+              const idx = (items[0] as { dataIndex?: number })?.dataIndex
+              return idx != null ? `Player #${idx + 1}` : ''
+            },
           },
-          title: (items: { label: string }[]) => `Player ${items[0]?.label ?? ''}`,
-        },
-        displayColors: false,
-      },
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: {
-          font: { size: 10 },
-          color: '#9ca3af',
-          maxRotation: 0,
+          displayColors: false,
         },
       },
-      y: {
-        grid: { color: 'rgba(0,0,0,0.04)' },
-        ticks: {
-          font: { size: 10 },
-          color: '#9ca3af',
-          callback: (value: number | string) => {
-            const num = typeof value === 'string' ? parseFloat(value) : value
-            return num >= 1000 ? `${(num / 1000).toFixed(1)}k` : String(num)
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            font: { size: 10 },
+            color: '#9ca3af',
+            maxRotation: 0,
+            autoSkip: false,
           },
         },
+        y: {
+          grid: { color: 'rgba(0,0,0,0.04)' },
+          ticks: {
+            font: { size: 10 },
+            color: '#9ca3af',
+            callback: formatTick,
+          },
+        },
       },
-    },
-  }
+    }
+  }, [tokenDecimals, tokenSymbol])
 
   return (
-    <div className="w-full aspect-[2/1] min-h-[180px] max-h-[300px]">
-      <Line data={data} options={options} />
+    <div className={preview ? 'w-full flex-1 min-h-[300px]' : 'w-full aspect-[2/1] min-h-[180px] max-h-[300px]'}>
+      <Line data={chartData} options={options} />
     </div>
   )
 }

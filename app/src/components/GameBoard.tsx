@@ -37,7 +37,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const [durationMinutes, setDurationMinutes] = useState(0)
   const [multiplierPct, setMultiplierPct] = useState(20)
   const [burnPct, setBurnPct] = useState(5)
-  const [baseEntry, setBaseEntry] = useState('0.1')
+  const [baseEntry, setBaseEntry] = useState('0.02')
   const [incentiveAmount, setIncentiveAmount] = useState('1')
   const [selectedToken, setSelectedToken] = useState<TokenInfo>(ALPH_TOKEN)
   const [tokenList, setTokenList] = useState<TokenInfo[]>([ALPH_TOKEN])
@@ -199,7 +199,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const buttonProps = getButtonProps()
 
   return (
-    <div className="flex flex-col items-center w-full max-w-md px-4 py-8 gap-5">
+    <div className="flex flex-col items-center w-full max-w-2xl px-4 py-8 gap-5">
       {txError && (
         <p className="w-full text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 break-all line-clamp-3">
           {txError}
@@ -327,6 +327,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
       {uiState === 'no-chain' && (
         <>
           <p className="text-gray-400 text-center text-sm">No active chain. Be the first to start one!</p>
+          <div className="w-full flex flex-col md:flex-row gap-5 md:items-stretch items-start justify-center">
           <div className="w-full max-w-xs flex flex-col gap-4 p-5 bg-gray-50 rounded-2xl border border-gray-100">
             <TokenSelector
               tokens={tokenList}
@@ -418,6 +419,20 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
                 <span className="text-base font-bold text-red-600 min-w-[4ch] text-right">{burnPct}%</span>
               </div>
             </div>
+          </div>
+          {parseFloat(baseEntry) > 0 && (
+            <div className="w-full flex-1 min-w-0 flex flex-col">
+              <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2">Price curve preview</p>
+              <PriceChart
+                baseEntry={BigInt(Math.floor(parseFloat(baseEntry) * 10 ** selectedToken.decimals))}
+                multiplierBps={BigInt(multiplierPct) * 100n}
+                playerCount={0n}
+                tokenSymbol={selectedToken.symbol}
+                tokenDecimals={selectedToken.decimals}
+                preview
+              />
+            </div>
+          )}
           </div>
         </>
       )}
