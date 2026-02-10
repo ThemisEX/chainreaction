@@ -200,7 +200,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   return (
     <div className="flex flex-col items-center w-full max-w-md px-4 py-8 gap-5">
       {txError && (
-        <p className="w-full text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+        <p className="w-full text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 break-all line-clamp-3">
           {txError}
         </p>
       )}
