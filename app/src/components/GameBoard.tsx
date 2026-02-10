@@ -253,8 +253,13 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
             return !prev
           })
         }}
-        className={`text-sm transition-colors -mt-2 ${soundEnabled ? 'text-emerald-500' : 'text-gray-400 hover:text-emerald-500'}`}
+        className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full border transition-colors -mt-2 ${
+          soundEnabled
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
+            : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-emerald-200 hover:text-emerald-500'
+        }`}
       >
+        <span className={`inline-block w-2 h-2 rounded-full ${soundEnabled ? 'bg-emerald-500' : 'bg-gray-300'}`} />
         {soundEnabled ? 'Notify when overtaken: on' : 'Notify when overtaken: off'}
       </button>
 
