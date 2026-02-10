@@ -13,7 +13,7 @@ interface LeaderboardProps {
 const sortOptions: { key: LeaderboardSort; label: string }[] = [
   { key: 'totalPayout', label: 'Payout' },
   { key: 'wins', label: 'Wins' },
-  { key: 'gamesPlayed', label: 'Games' },
+  { key: 'gamesPlayed', label: 'Plays' },
 ]
 
 export const Leaderboard: FC<LeaderboardProps> = ({ data, isLoading, currentUserAddress }) => {
@@ -98,7 +98,7 @@ export const Leaderboard: FC<LeaderboardProps> = ({ data, isLoading, currentUser
                   <span className="text-sm font-bold text-gray-900">{formatAlph(player.totalPayout)}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-gray-400 uppercase">Games</span>
+                  <span className="text-[10px] text-gray-400 uppercase">Plays</span>
                   <span className="text-sm font-bold text-gray-900">{player.gamesPlayed}</span>
                 </div>
               </div>
