@@ -53,7 +53,7 @@ Contract ChainReaction(
         assert!(payment > 0, ErrorCodes.InsufficientPayment)
         let caller = callerAddress!()
 
-        transferTokenToSelf!(caller, tokenId, payment)
+        transferTokenToSelf!(caller, tokenIdGame, payment)
 
 
         // Initialize new chain
