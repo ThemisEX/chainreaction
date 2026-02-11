@@ -76,7 +76,7 @@ export const GameList: FC<{ games: GameListItem[]; isLoading: boolean }> = ({ ga
             <Link
               key={game.contractId}
               href={`/game?address=${game.address}`}
-              className="group flex flex-col p-4 rounded-2xl border border-gray-100 bg-white hover:border-emerald-200 hover:shadow-sm transition-all"
+              className="group flex flex-col p-4 rounded-2xl border-2 border-gray-200 bg-white hover:border-emerald-400 hover:shadow-md transition-all cursor-pointer"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
