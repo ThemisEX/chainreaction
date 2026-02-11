@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useMemo, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { FC } from 'react'
 import { BigButton } from './BigButton'
 import { CountdownTimer } from './CountdownTimer'
@@ -11,7 +11,7 @@ import { useWallet } from '@alephium/web3-react'
 import { web3 } from '@alephium/web3'
 import { useChainReaction } from '@/hooks/useChainReaction'
 import { GameContractInstance, startChain, joinChain, endChain, incentivize, GameState, normalizeAddress } from '@/services/game.service'
-import { TokenInfo, ALPH_TOKEN, fetchWalletTokens, fetchTokenBalance, findTokenById, formatTokenAmount } from '@/services/tokenList'
+import { TokenInfo, ALPH_TOKEN, fetchWalletTokens, fetchTokenBalance, resolveTokenInfo, formatTokenAmount } from '@/services/tokenList'
 
 type UIState = 'loading' | 'no-chain' | 'active' | 'claimable' | 'error'
 
@@ -117,11 +117,15 @@ export const GameBoard: FC<{ contractInstance: GameContractInstance; onConnectRe
     ? userBalance >= gameState.nextEntryPrice
     : true
 
-  // Resolve the active game's token info
-  const activeToken = useMemo(() => {
-    if (!gameState?.tokenId) return ALPH_TOKEN
-    return findTokenById(tokenList, gameState.tokenId) ?? ALPH_TOKEN
-  }, [gameState?.tokenId, tokenList])
+  // Resolve the active game's token info from the full token list (not just wallet)
+  const [activeToken, setActiveToken] = useState<TokenInfo>(ALPH_TOKEN)
+  useEffect(() => {
+    if (!gameState?.tokenId) {
+      setActiveToken(ALPH_TOKEN)
+      return
+    }
+    resolveTokenInfo(gameState.tokenId).then(setActiveToken)
+  }, [gameState?.tokenId])
 
   const handleStartChain = async () => {
     if (!signer) { onConnectRequest(); return }
