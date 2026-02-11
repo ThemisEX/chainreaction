@@ -3,6 +3,9 @@
 // If no one joins within timeout blocks, last player wins pot
 
 Contract ChainReaction(
+    factoryId: ByteVec,
+    durationDecreaseMs: U256,
+    minDuration: U256,
     mut chainId: U256,
     mut currentEntry: U256,        // Current entry price
     mut lastPlayer: Address,       // Last player who joined
@@ -17,9 +20,7 @@ Contract ChainReaction(
     mut multiplierBps: U256,        // Multiplier in basis points (1000 = 10%)
     mut tokenId: ByteVec,
     mut burnBps: U256,
-    mut burnedAmount: U256,
-    durationDecreaseMs: U256,
-    minDuration: U256
+    mut burnedAmount: U256
 ) {
 
     // Events
@@ -41,7 +42,7 @@ Contract ChainReaction(
 
     // Start a new chain
     @using(preapprovedAssets = true, updateFields = true, checkExternalCaller = false, assetsInContract = true)
-    pub fn startChain(payment: U256, durationGameMs: U256, multiplierGameBps: U256, tokenIdGame: ByteVec, burnRate: U256) -> () {
+    pub fn startChain(payment: U256, durationGameMs: U256, multiplierGameBps: U256, tokenIdGame: ByteVec, burnRate: U256) -> (U256, U256, U256, U256) {
         // Check no active chain
         assert!(!isActive, ErrorCodes.ChainAlreadyActive)
         assert!(durationGameMs >= durationDecreaseMs, ErrorCodes.DurationToLow)
@@ -74,11 +75,13 @@ Contract ChainReaction(
 
         emit ChainStarted(chainId, lastEntryTimestamp)
         emit PlayerJoined(chainId, lastPlayer, payment, pot, playerCount, 0)
+
+        return chainId, lastEntryTimestamp, pot, playerCount
     }
 
     // Join existing chain
     @using(preapprovedAssets = true, updateFields = true, checkExternalCaller = false, assetsInContract = true)
-    pub fn joinChain(payment: U256) -> () {
+    pub fn joinChain(payment: U256) -> (U256, U256, U256, U256, U256) {
         // Verify chain is active
         assert!(isActive, ErrorCodes.ChainNotActive)
         let caller = callerAddress!()
@@ -120,11 +123,13 @@ Contract ChainReaction(
         pot = pot + totalPayment
 
         emit PlayerJoined(chainId, lastPlayer, totalPayment, pot, playerCount, amountToBurn)
+
+        return chainId, totalPayment, pot, playerCount, amountToBurn
     }
 
     // End chain and pay winner (callable by anyone after timeout)
     @using(assetsInContract = true, updateFields = true, checkExternalCaller = false)
-    pub fn endChain() -> () {
+    pub fn endChain() -> (U256, Address, U256, U256) {
 
         assert!(canEnd(), ErrorCodes.TooEarlyToEnd)
 
@@ -135,6 +140,10 @@ Contract ChainReaction(
 
         emit ChainEnded(chainId, lastPlayer, totalAmount, burnedAmount)
 
+        let burnedAmountRound = burnedAmount
+        let totalAmountRound = totalAmount
+        let chainIdRound = chainId
+
         // Reset for next chain
         isActive = false
         pot = 0
@@ -142,6 +151,10 @@ Contract ChainReaction(
         playerCount = 0
         currentEntry = 0
         burnedAmount = 0
+        chainId = 0
+
+        return chainIdRound, lastPlayer, totalAmountRound, burnedAmountRound
+  
     }
 
     // Check if chain can be ended (view function)
@@ -176,6 +189,10 @@ Contract ChainReaction(
         }
        // return currentEntry + (currentEntry * multiplierBps / 10000)
        return currentEntry + (currentEntry * multiplierBps / 10000)
+    }
+
+    pub fn getFactoryId() -> ByteVec {
+        return factoryId
     }
 
 }

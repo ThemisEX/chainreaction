@@ -1,0 +1,94 @@
+Contract FactoryChainReaction(
+    playContractTemplateId: ByteVec,
+    mut numberGames: U256
+){
+
+
+    event NewGameCreated(contractId: ByteVec, gameId: U256)
+
+    //game events
+    event ChainStarted(gameContractId: ChainReaction, chainId: U256, startBlock: U256)
+    event PlayerJoined(gameContractId: ChainReaction, chainId: U256, player: Address, entryFee: U256, newPot: U256, position: U256, amountBurned: U256)
+    event ChainEnded(gameContractId: ChainReaction, chainId: U256, winner: Address, payout: U256, totalBurned: U256)
+    event ChainTimeout(gameContractId: ChainReaction, chainId: U256, player: Address)
+    event PotBoosted(gameContractId: ChainReaction, caller: Address, amount: U256)
+
+    // add always running feature
+    @using(preapprovedAssets = true, updateFields = true, checkExternalCaller = false)
+    pub fn createNewGame(durationDecreaseMsGame: U256, minDurationGame: U256) -> ByteVec{
+
+        let caller = callerAddress!()
+
+            let (initialImmState, initialMutState) = ChainReaction.encodeFields!(selfContractId!(),
+                                                                            durationDecreaseMsGame,
+                                                                            minDurationGame,
+                                                                            0,
+                                                                            0,        // Current entry price
+                                                                            nullContractAddress!(),       // Last player who joined
+                                                                            0,     // Block when last player joined
+                                                                            0,                 // Total pot
+                                                                            0,
+                                                                            0,         // Number of players in current chain
+                                                                            false,            // Is chain active?
+                                                                            0,               // Starting entry (1 ALPH)
+                                                                            0,
+                                                                            0,
+                                                                            0,        // Multiplier in basis points (1000 = 10%)
+                                                                            ALPH,
+                                                                            0,
+                                                                            0
+                                                                            
+            )
+
+            let contractId = copyCreateContract!{caller -> ALPH: minimalContractDeposit!()}(    
+                playContractTemplateId,
+                initialImmState,
+                initialMutState
+            )
+
+            numberGames = numberGames + 1
+
+            emit NewGameCreated(contractId, numberGames)
+
+            return contractId
+    }
+
+    @using(preapprovedAssets = true,checkExternalCaller = false)
+    pub fn startChain(gameContractId: ChainReaction, payment: U256, tokenId: ByteVec, durationGameMs: U256, multiplierGameBps: U256, tokenIdGame: ByteVec, burnRate: U256) -> (){
+
+        let caller = callerAddress!()
+        let (chainId, lastEntryTimestamp, pot, playerCount) = gameContractId.startChain{caller -> tokenId: payment}(payment, durationGameMs, multiplierGameBps, tokenIdGame, burnRate)
+
+        emit ChainStarted(gameContractId, chainId, lastEntryTimestamp)
+        emit PlayerJoined(gameContractId, chainId, caller, payment, pot, playerCount, 0)
+        
+    }
+    
+    @using(preapprovedAssets = true, checkExternalCaller = false)
+    pub fn joinChain(gameContractId: ChainReaction, payment: U256, tokenId: ByteVec) -> () {
+        let caller = callerAddress!()
+
+       let (chainId, totalPayment, pot, playerCount, amountToBurn) = gameContractId.joinChain{caller -> tokenId: payment}(payment)
+
+        emit PlayerJoined(gameContractId, chainId, caller, totalPayment, pot, playerCount, amountToBurn)
+    }
+
+    @using(preapprovedAssets = true, checkExternalCaller = false)
+    pub fn endChain(gameContractId: ChainReaction) -> () {
+
+        let (chainId, lastPlayer, totalAmount, burnedAmount)  = gameContractId.endChain()
+
+        emit ChainEnded(gameContractId, chainId, lastPlayer, totalAmount, burnedAmount)
+    }
+
+    @using(preapprovedAssets = true, checkExternalCaller = false)
+    pub fn incentive(gameContractId: ChainReaction, amount: U256, tokenId: ByteVec) -> (){
+
+        let caller = callerAddress!()
+
+        gameContractId.incentive{caller -> tokenId: amount}(amount)
+
+        emit PotBoosted(gameContractId, caller, amount)
+    }
+
+}

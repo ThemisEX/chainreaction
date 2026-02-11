@@ -5,7 +5,7 @@ import { stringToHex, NULL_CONTRACT_ADDRESS, ALPH_TOKEN_ID } from '@alephium/web
 
 // This deploy function will be called by cli deployment tool automatically
 // Note that deployment scripts should prefixed with numbers (starting from 0)
-const deployGame: DeployFunction<Settings> = async (
+const deployTemplate: DeployFunction<Settings> = async (
   deployer: Deployer,
   network: Network<Settings>
 ): Promise<void> => {
@@ -29,11 +29,12 @@ const deployGame: DeployFunction<Settings> = async (
       durationDecreaseMs: 60n * 1000n,
       minDuration: 60n * 1000n,
       tokenId: ALPH_TOKEN_ID,
-      burnedAmount: 0n
+      burnedAmount: 0n,
+      factoryId: '00'
     }
   })
   console.log('contract id: ' + result.contractInstance.contractId)
   console.log('contract address: ' + result.contractInstance.address)
 }
 
-export default deployGame
+export default deployTemplate

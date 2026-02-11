@@ -10,7 +10,7 @@ import { PriceChart } from './PriceChart'
 import { useWallet } from '@alephium/web3-react'
 import { web3 } from '@alephium/web3'
 import { useChainReaction } from '@/hooks/useChainReaction'
-import { GameConfig } from '@/services/utils'
+import { ChainReactionInstance } from 'my-contracts'
 import { startChain, joinChain, endChain, incentivize, GameState, normalizeAddress } from '@/services/game.service'
 import { TokenInfo, ALPH_TOKEN, fetchWalletTokens, fetchTokenBalance, findTokenById, formatTokenAmount } from '@/services/tokenList'
 
@@ -28,9 +28,9 @@ function deriveUIState(
   return 'active'
 }
 
-export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }> = ({ config, onConnectRequest }) => {
+export const GameBoard: FC<{ contractInstance: ChainReactionInstance; onConnectRequest: () => void }> = ({ contractInstance, onConnectRequest }) => {
   const { signer, account } = useWallet()
-  const { gameState, isLoading, error, refresh, players } = useChainReaction(config.contractInstance)
+  const { gameState, isLoading, error, refresh } = useChainReaction(contractInstance)
   const [ongoingTxId, setOngoingTxId] = useState<string>()
   const [txError, setTxError] = useState<string>()
   const [durationHours, setDurationHours] = useState(1)
@@ -140,7 +140,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
       const durationMs = (BigInt(durationHours) * 3600n + BigInt(durationMinutes) * 60n) * 1000n
       const multiplierBps = BigInt(multiplierPct) * 100n
       const burnRate = BigInt(burnPct) * 100n
-      const result = await startChain(config.contractInstance, signer, payment, durationMs, multiplierBps, selectedToken.id, burnRate)
+      const result = await startChain(contractInstance, signer, payment, durationMs, multiplierBps, selectedToken.id, burnRate)
       setOngoingTxId(result.txId)
     } catch (err) {
       setTxError(err instanceof Error ? err.message : 'Transaction failed')
@@ -153,7 +153,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
     setTxError(undefined)
     try {
       const payment = gameState.nextEntryPrice
-      const result = await joinChain(config.contractInstance, signer, payment, gameState.tokenId)
+      const result = await joinChain(contractInstance, signer, payment, gameState.tokenId)
       setOngoingTxId(result.txId)
     } catch (err) {
       setTxError(err instanceof Error ? err.message : 'Transaction failed')
@@ -164,7 +164,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
     if (!signer) { onConnectRequest(); return }
     setTxError(undefined)
     try {
-      const result = await endChain(config.contractInstance, signer, gameState?.tokenId ?? '')
+      const result = await endChain(contractInstance, signer, gameState?.tokenId ?? '')
       setOngoingTxId(result.txId)
     } catch (err) {
       setTxError(err instanceof Error ? err.message : 'Transaction failed')
@@ -176,7 +176,7 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
     setTxError(undefined)
     try {
       const amount = BigInt(Math.floor(parseFloat(incentiveAmount) * 10 ** activeToken.decimals))
-      const result = await incentivize(config.contractInstance, signer, amount, gameState.tokenId)
+      const result = await incentivize(contractInstance, signer, amount, gameState.tokenId)
       setOngoingTxId(result.txId)
     } catch (err) {
       setTxError(err instanceof Error ? err.message : 'Transaction failed')

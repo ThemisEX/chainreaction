@@ -1,12 +1,13 @@
 import { NetworkId, web3 } from "@alephium/web3";
 import { loadDeployments } from "my-contracts/deployments"
-import { ChainReactionInstance } from "my-contracts"
+import { FactoryChainReactionInstance } from "my-contracts"
 
 export interface GameConfig {
   network: NetworkId
   groupIndex: number
-  chainReactionAddress: string
-  contractInstance: ChainReactionInstance
+  factoryAddress: string
+  factoryInstance: FactoryChainReactionInstance
+  v1Address: string | undefined
 }
 
 function getNetwork(): NetworkId {
@@ -27,10 +28,11 @@ function getNodeUrl(network: NetworkId): string {
 function getGameConfig(): GameConfig {
   const network = getNetwork()
   web3.setCurrentNodeProvider(getNodeUrl(network))
-  const chainReaction = loadDeployments(network).contracts.ChainReaction.contractInstance
-  const groupIndex = chainReaction.groupIndex
-  const chainReactionAddress = chainReaction.address
-  return { network, groupIndex, chainReactionAddress, contractInstance: chainReaction }
+  const deployments = loadDeployments(network)
+  const factory = deployments.contracts.FactoryChainReaction!.contractInstance
+  const groupIndex = factory.groupIndex
+  const v1Address = process.env.NEXT_PUBLIC_CHAINREACTIONV1 || undefined
+  return { network, groupIndex, factoryAddress: factory.address, factoryInstance: factory, v1Address }
 }
 
 export const gameConfig = getGameConfig()

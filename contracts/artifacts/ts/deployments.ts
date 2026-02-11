@@ -7,7 +7,12 @@ import {
   DeployContractExecutionResult,
   NetworkId,
 } from "@alephium/web3";
-import { ChainReaction, ChainReactionInstance } from ".";
+import {
+  ChainReaction,
+  ChainReactionInstance,
+  FactoryChainReaction,
+  FactoryChainReactionInstance,
+} from ".";
 import { default as mainnetDeployments } from "../../deployments/.deployments.mainnet.json";
 import { default as testnetDeployments } from "../../deployments/.deployments.testnet.json";
 import { default as devnetDeployments } from "../../deployments/.deployments.devnet.json";
@@ -16,6 +21,7 @@ export type Deployments = {
   deployerAddress: string;
   contracts: {
     ChainReaction: DeployContractExecutionResult<ChainReactionInstance>;
+    FactoryChainReaction: DeployContractExecutionResult<FactoryChainReactionInstance>;
   };
 };
 
@@ -25,6 +31,12 @@ function toDeployments(json: any): Deployments {
       ...json.contracts["ChainReaction"],
       contractInstance: ChainReaction.at(
         json.contracts["ChainReaction"].contractInstance.address
+      ),
+    },
+    FactoryChainReaction: {
+      ...json.contracts["FactoryChainReaction"],
+      contractInstance: FactoryChainReaction.at(
+        json.contracts["FactoryChainReaction"].contractInstance.address
       ),
     },
   };

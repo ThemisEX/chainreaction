@@ -8,7 +8,7 @@ import { useWallet } from '@alephium/web3-react'
 import { gameConfig } from '@/services/utils'
 
 export default function LeaderboardPage() {
-  const { leaderboard, isLoading, error } = useLeaderboard(gameConfig.contractInstance)
+  const { leaderboard, isLoading, error } = useLeaderboard(gameConfig.factoryInstance)
   const { account } = useWallet()
 
   return (
