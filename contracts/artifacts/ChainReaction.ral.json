@@ -1,10 +1,13 @@
 {
   "version": "v4.3.0",
   "name": "ChainReaction",
-  "bytecode": "110740854122415b4172418c41b241d20101050700404ad338e7beeda007190f7b1601ce003413067b16041367103213077b56170516000c330e7bb41706160616031600ac1600a1081603a10c1601a10a1602a10ba0000d2aa100a008a1011606a1021605a00a2aa1091605a103a00416002aa1040da1061604a10d0ca10e03a10705a000a0035f06a000a0021600a004a0060c7401010107004057d34ad877d7a0070c7bb417015617021602a00931117b0006170316001603340e7b1601a00c1603aca0060d2aa1061603a1011601a1021602a1031603a00d2c1367102d1704a00e16042aa10e160316042b1705a00ccd424c04b2a00c1604bda00a17061606ce01324c03ce0117064a06a00aa006ce002c2b1706160216062aa109a00416052aa10406a000a0021605a004a00616047401020001001ed3b02ce78c0003107ba005a0042a1700a002a00c1600ab07a000a0021600a00e6104a1070ca1040ca1050ca1060ca1010ca10e01000000010ad327625287a007194c02040256a0093402010000000709d3d50f1f95a000a001a002a003a004a007a00602010101020012d348021c29a0070c7bb417011601a00c1600aca00516002aa10509160116005f01000000010ed3b1b69428a007194c02a00802a001a001a00b2c1367102d2a02",
-  "codeHash": "aa014ef701715d339e6b127522e995c29a5f28a1ab9157a19949dc03445674d0",
+  "bytecode": "1208408e41364188419f41b941df41ff420d0101050704404fd3477a3a39a007190f7b1601ce013413067b16041367103213077b56170516000c330e7bb41706160616031600ac1600a1081603a10c1601a10a1602a10ba0000d2aa100a008a1011606a1021605a00a2aa1091605a103a00416002aa1040da1061604a10d0ca10e03a10705a000a0035f06a000a0021600a004a0060c74a000a003a004a006020101010705405dd38cd70d01a0070c7bb417015617021602a00931117b0006170316001603340e7b1601a00c1603aca0060d2aa1061603a1011601a1021602a1031603a00d2c1367102d1704a00e16042aa10e160316042b1705a00ccd424c04b2a00c1604bda00a17061606ce02324c03ce0217064a06a00aa006ce012c2b1706160216062aa109a00416052aa10406a000a0021605a004a006160474a0001605a004a0061604020102000404402bd3ccac5ecc0003107ba005a0042a1700a002a00c1600ab07a000a0021600a00e61a00e170116001702a000170304a1070ca1040ca1050ca1060ca1010ca10e0ca1001603a002160216010201000000010ad327625287a007194c02040256a0093402010000000709d3d50f1f95a000a001a002a003a004a007a00602010101020012d348021c29a0070c7bb417011601a00c1600aca00516002aa10509160116005f01000000010ed3b1b69428a007194c02a00802a001a001a00b2c1367102d2a02010000000103d3dc32daa9ce0002",
+  "codeHash": "10f30193e767cf83528e75cbd761f413f12e674759249cffd889d277e866da56",
   "fieldsSig": {
     "names": [
+      "factoryId",
+      "durationDecreaseMs",
+      "minDuration",
       "chainId",
       "currentEntry",
       "lastPlayer",
@@ -19,11 +22,12 @@
       "multiplierBps",
       "tokenId",
       "burnBps",
-      "burnedAmount",
-      "durationDecreaseMs",
-      "minDuration"
+      "burnedAmount"
     ],
     "types": [
+      "ByteVec",
+      "U256",
+      "U256",
       "U256",
       "U256",
       "Address",
@@ -38,28 +42,27 @@
       "U256",
       "ByteVec",
       "U256",
-      "U256",
-      "U256",
       "U256"
     ],
     "isMutable": [
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
       false,
-      false
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
     ]
   },
   "eventsSig": [
@@ -155,7 +158,12 @@
         false,
         false
       ],
-      "returnTypes": []
+      "returnTypes": [
+        "U256",
+        "U256",
+        "U256",
+        "U256"
+      ]
     },
     {
       "name": "joinChain",
@@ -168,14 +176,25 @@
       "paramIsMutable": [
         false
       ],
-      "returnTypes": []
+      "returnTypes": [
+        "U256",
+        "U256",
+        "U256",
+        "U256",
+        "U256"
+      ]
     },
     {
       "name": "endChain",
       "paramNames": [],
       "paramTypes": [],
       "paramIsMutable": [],
-      "returnTypes": []
+      "returnTypes": [
+        "U256",
+        "Address",
+        "U256",
+        "U256"
+      ]
     },
     {
       "name": "canEnd",
@@ -221,6 +240,15 @@
       "paramIsMutable": [],
       "returnTypes": [
         "U256"
+      ]
+    },
+    {
+      "name": "getFactoryId",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "ByteVec"
       ]
     }
   ],

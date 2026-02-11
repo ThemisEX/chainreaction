@@ -39,6 +39,9 @@ import { getContractByCodeHash, registerContract } from "./contracts";
 // Custom types for the contract
 export namespace ChainReactionTypes {
   export type Fields = {
+    factoryId: HexString;
+    durationDecreaseMs: bigint;
+    minDuration: bigint;
     chainId: bigint;
     currentEntry: bigint;
     lastPlayer: Address;
@@ -54,8 +57,6 @@ export namespace ChainReactionTypes {
     tokenId: HexString;
     burnBps: bigint;
     burnedAmount: bigint;
-    durationDecreaseMs: bigint;
-    minDuration: bigint;
   };
 
   export type State = ContractState<Fields>;
@@ -96,15 +97,15 @@ export namespace ChainReactionTypes {
         tokenIdGame: HexString;
         burnRate: bigint;
       }>;
-      result: CallContractResult<null>;
+      result: CallContractResult<[bigint, bigint, bigint, bigint]>;
     };
     joinChain: {
       params: CallContractParams<{ payment: bigint }>;
-      result: CallContractResult<null>;
+      result: CallContractResult<[bigint, bigint, bigint, bigint, bigint]>;
     };
     endChain: {
       params: Omit<CallContractParams<{}>, "args">;
-      result: CallContractResult<null>;
+      result: CallContractResult<[bigint, Address, bigint, bigint]>;
     };
     canEnd: {
       params: Omit<CallContractParams<{}>, "args">;
@@ -123,6 +124,10 @@ export namespace ChainReactionTypes {
     getNextEntryPrice: {
       params: Omit<CallContractParams<{}>, "args">;
       result: CallContractResult<bigint>;
+    };
+    getFactoryId: {
+      params: Omit<CallContractParams<{}>, "args">;
+      result: CallContractResult<HexString>;
     };
   }
   export type CallMethodParams<T extends keyof CallMethodTable> =
@@ -173,6 +178,10 @@ export namespace ChainReactionTypes {
       result: SignExecuteScriptTxResult;
     };
     getNextEntryPrice: {
+      params: Omit<SignExecuteContractMethodParams<{}>, "args">;
+      result: SignExecuteScriptTxResult;
+    };
+    getFactoryId: {
       params: Omit<SignExecuteContractMethodParams<{}>, "args">;
       result: SignExecuteScriptTxResult;
     };
@@ -230,7 +239,9 @@ class Factory extends ContractFactory<
           burnRate: bigint;
         }
       >
-    ): Promise<TestContractResultWithoutMaps<null>> => {
+    ): Promise<
+      TestContractResultWithoutMaps<[bigint, bigint, bigint, bigint]>
+    > => {
       return testMethod(this, "startChain", params, getContractByCodeHash);
     },
     joinChain: async (
@@ -238,7 +249,9 @@ class Factory extends ContractFactory<
         ChainReactionTypes.Fields,
         { payment: bigint }
       >
-    ): Promise<TestContractResultWithoutMaps<null>> => {
+    ): Promise<
+      TestContractResultWithoutMaps<[bigint, bigint, bigint, bigint, bigint]>
+    > => {
       return testMethod(this, "joinChain", params, getContractByCodeHash);
     },
     endChain: async (
@@ -246,7 +259,9 @@ class Factory extends ContractFactory<
         TestContractParamsWithoutMaps<ChainReactionTypes.Fields, never>,
         "args"
       >
-    ): Promise<TestContractResultWithoutMaps<null>> => {
+    ): Promise<
+      TestContractResultWithoutMaps<[bigint, Address, bigint, bigint]>
+    > => {
       return testMethod(this, "endChain", params, getContractByCodeHash);
     },
     canEnd: async (
@@ -290,6 +305,14 @@ class Factory extends ContractFactory<
         getContractByCodeHash
       );
     },
+    getFactoryId: async (
+      params: Omit<
+        TestContractParamsWithoutMaps<ChainReactionTypes.Fields, never>,
+        "args"
+      >
+    ): Promise<TestContractResultWithoutMaps<HexString>> => {
+      return testMethod(this, "getFactoryId", params, getContractByCodeHash);
+    },
   };
 
   stateForTest(
@@ -306,7 +329,7 @@ export const ChainReaction = new Factory(
   Contract.fromJson(
     ChainReactionContractJson,
     "",
-    "aa014ef701715d339e6b127522e995c29a5f28a1ab9157a19949dc03445674d0",
+    "10f30193e767cf83528e75cbd761f413f12e674759249cffd889d277e866da56",
     []
   )
 );
@@ -487,6 +510,17 @@ export class ChainReactionInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    getFactoryId: async (
+      params?: ChainReactionTypes.CallMethodParams<"getFactoryId">
+    ): Promise<ChainReactionTypes.CallMethodResult<"getFactoryId">> => {
+      return callMethod(
+        ChainReaction,
+        this,
+        "getFactoryId",
+        params === undefined ? {} : params,
+        getContractByCodeHash
+      );
+    },
   };
 
   transact = {
@@ -531,6 +565,11 @@ export class ChainReactionInstance extends ContractInstance {
         "getNextEntryPrice",
         params
       );
+    },
+    getFactoryId: async (
+      params: ChainReactionTypes.SignExecuteMethodParams<"getFactoryId">
+    ): Promise<ChainReactionTypes.SignExecuteMethodResult<"getFactoryId">> => {
+      return signExecuteMethod(ChainReaction, this, "getFactoryId", params);
     },
   };
 

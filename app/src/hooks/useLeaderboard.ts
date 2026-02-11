@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { ChainReactionInstance, ChainReactionTypes } from 'my-contracts'
+import { FactoryChainReactionInstance, FactoryChainReactionTypes } from 'my-contracts'
 import { normalizeAddress } from '@/services/game.service'
 
 export interface PlayerStats {
@@ -23,7 +23,7 @@ function getOrCreate(map: Map<string, PlayerStats>, address: string): PlayerStat
   return s
 }
 
-export function useLeaderboard(contract: ChainReactionInstance) {
+export function useLeaderboard(factory: FactoryChainReactionInstance) {
   const statsRef = useRef<Map<string, PlayerStats>>(new Map())
   const [version, setVersion] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -34,7 +34,7 @@ export function useLeaderboard(contract: ChainReactionInstance) {
     statsRef.current = new Map()
     const seen = new Set<string>()
 
-    const sub = contract.subscribeAllEvents({
+    const sub = factory.subscribeAllEvents({
       pollingInterval: 4000,
       messageCallback: async (event) => {
         if (cancelled) return
@@ -44,12 +44,12 @@ export function useLeaderboard(contract: ChainReactionInstance) {
         seen.add(eventKey)
 
         if (event.name === 'PlayerJoined') {
-          const fields = event.fields as ChainReactionTypes.PlayerJoinedEvent['fields']
+          const fields = event.fields as FactoryChainReactionTypes.PlayerJoinedEvent['fields']
           const s = getOrCreate(statsRef.current, normalizeAddress(fields.player))
           s.gamesPlayed += 1
           s.totalSpent += fields.entryFee + fields.amountBurned
         } else if (event.name === 'ChainEnded') {
-          const fields = event.fields as ChainReactionTypes.ChainEndedEvent['fields']
+          const fields = event.fields as FactoryChainReactionTypes.ChainEndedEvent['fields']
           const s = getOrCreate(statsRef.current, normalizeAddress(fields.winner))
           s.wins += 1
           s.totalPayout += fields.payout
@@ -76,7 +76,7 @@ export function useLeaderboard(contract: ChainReactionInstance) {
       clearTimeout(timeout)
       sub.unsubscribe()
     }
-  }, [contract])
+  }, [factory])
 
   const leaderboard = useMemo(() => {
     return Array.from(statsRef.current.values())

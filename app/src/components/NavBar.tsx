@@ -21,7 +21,7 @@ export const NavBar = forwardRef<HTMLDivElement>((_, ref) => {
               pathname === '/' ? 'text-emerald-600' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
-            Game
+            Games
           </Link>
           <Link
             href="/leaderboard"
