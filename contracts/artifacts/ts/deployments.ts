@@ -21,7 +21,7 @@ export type Deployments = {
   deployerAddress: string;
   contracts: {
     ChainReaction: DeployContractExecutionResult<ChainReactionInstance>;
-    FactoryChainReaction?: DeployContractExecutionResult<FactoryChainReactionInstance>;
+    FactoryChainReaction: DeployContractExecutionResult<FactoryChainReactionInstance>;
   };
 };
 
@@ -33,15 +33,12 @@ function toDeployments(json: any): Deployments {
         json.contracts["ChainReaction"].contractInstance.address
       ),
     },
-    FactoryChainReaction:
-      json.contracts["FactoryChainReaction"] === undefined
-        ? undefined
-        : {
-            ...json.contracts["FactoryChainReaction"],
-            contractInstance: FactoryChainReaction.at(
-              json.contracts["FactoryChainReaction"].contractInstance.address
-            ),
-          },
+    FactoryChainReaction: {
+      ...json.contracts["FactoryChainReaction"],
+      contractInstance: FactoryChainReaction.at(
+        json.contracts["FactoryChainReaction"].contractInstance.address
+      ),
+    },
   };
   return {
     ...json,
