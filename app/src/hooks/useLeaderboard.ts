@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { ChainReactionInstance, ChainReactionTypes } from 'my-contracts'
+import { normalizeAddress } from '@/services/game.service'
 
 export interface PlayerStats {
   address: string
@@ -30,20 +31,26 @@ export function useLeaderboard(contract: ChainReactionInstance) {
 
   useEffect(() => {
     let cancelled = false
+    statsRef.current = new Map()
+    const seen = new Set<string>()
 
     const sub = contract.subscribeAllEvents({
       pollingInterval: 4000,
       messageCallback: async (event) => {
         if (cancelled) return
 
+        const eventKey = `${event.txId}:${event.eventIndex}`
+        if (seen.has(eventKey)) return
+        seen.add(eventKey)
+
         if (event.name === 'PlayerJoined') {
           const fields = event.fields as ChainReactionTypes.PlayerJoinedEvent['fields']
-          const s = getOrCreate(statsRef.current, fields.player)
+          const s = getOrCreate(statsRef.current, normalizeAddress(fields.player))
           s.gamesPlayed += 1
-          s.totalSpent += fields.entryFee
+          s.totalSpent += fields.entryFee + fields.amountBurned
         } else if (event.name === 'ChainEnded') {
           const fields = event.fields as ChainReactionTypes.ChainEndedEvent['fields']
-          const s = getOrCreate(statsRef.current, fields.winner)
+          const s = getOrCreate(statsRef.current, normalizeAddress(fields.winner))
           s.wins += 1
           s.totalPayout += fields.payout
         }

@@ -11,7 +11,7 @@ interface LeaderboardProps {
 }
 
 const sortOptions: { key: LeaderboardSort; label: string }[] = [
-  { key: 'totalPayout', label: 'Payout' },
+  { key: 'totalPayout', label: 'Profit' },
   { key: 'wins', label: 'Wins' },
   { key: 'gamesPlayed', label: 'Plays' },
 ]
@@ -22,7 +22,7 @@ export const Leaderboard: FC<LeaderboardProps> = ({ data, isLoading, currentUser
   const sorted = [...data].sort((a, b) => {
     switch (sortBy) {
       case 'wins': return b.wins - a.wins
-      case 'totalPayout': return Number(b.totalPayout - a.totalPayout)
+      case 'totalPayout': return Number((b.totalPayout - b.totalSpent) - (a.totalPayout - a.totalSpent))
       case 'gamesPlayed': return b.gamesPlayed - a.gamesPlayed
     }
   })
@@ -63,7 +63,7 @@ export const Leaderboard: FC<LeaderboardProps> = ({ data, isLoading, currentUser
       </div>
 
       <div className="flex flex-col gap-2">
-        {sorted.map((player, i) => {
+        {sorted.slice(0, 10).map((player, i) => {
           const rank = i + 1
           const isCurrentUser = currentUserAddress ? normalizeAddress(currentUserAddress) === normalizeAddress(player.address) : false
           return (
@@ -88,14 +88,22 @@ export const Leaderboard: FC<LeaderboardProps> = ({ data, isLoading, currentUser
                   {isCurrentUser ? 'You' : shortenAddress(player.address)}
                 </p>
               </div>
-              <div className="flex gap-4 text-right">
+              <div className="grid grid-cols-4 gap-2 text-right w-[280px] shrink-0">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-gray-400 uppercase">Wins</span>
                   <span className="text-sm font-bold text-gray-900">{player.wins}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-gray-400 uppercase">Payout</span>
-                  <span className="text-sm font-bold text-gray-900">{formatAlph(player.totalPayout)}</span>
+                  <span className="text-[10px] text-gray-400 uppercase">Spent</span>
+                  <span className="text-sm font-bold text-gray-900">{formatAlph(player.totalSpent)}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-gray-400 uppercase">Profit</span>
+                  <span className={`text-sm font-bold ${player.totalPayout > player.totalSpent ? 'text-emerald-600' : player.totalPayout < player.totalSpent ? 'text-red-500' : 'text-gray-900'}`}>
+                    {player.totalPayout >= player.totalSpent
+                      ? formatAlph(player.totalPayout - player.totalSpent)
+                      : `-${formatAlph(player.totalSpent - player.totalPayout)}`}
+                  </span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-gray-400 uppercase">Plays</span>
