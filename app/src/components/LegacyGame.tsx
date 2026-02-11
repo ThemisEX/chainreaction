@@ -1,15 +1,38 @@
 'use client'
 
-import React, { FC, useMemo } from 'react'
+import React, { FC, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ChainReaction } from 'my-contracts'
-import { useChainReaction } from '@/hooks/useChainReaction'
+import { fetchV1GameState, GameState, shortenAddress } from '@/services/game.service'
 import { formatTokenAmount } from '@/services/tokenList'
-import { shortenAddress } from '@/services/game.service'
 
 export const LegacyGame: FC<{ address: string }> = ({ address }) => {
-  const contractInstance = useMemo(() => ChainReaction.at(address), [address])
-  const { gameState, isLoading } = useChainReaction(contractInstance)
+  const [gameState, setGameState] = useState<GameState | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    mountedRef.current = true
+
+    const poll = async () => {
+      try {
+        const state = await fetchV1GameState(address)
+        if (mountedRef.current) {
+          setGameState(state)
+          setIsLoading(false)
+        }
+      } catch {
+        if (mountedRef.current) setIsLoading(false)
+      }
+    }
+
+    poll()
+    const interval = setInterval(poll, 15000)
+
+    return () => {
+      mountedRef.current = false
+      clearInterval(interval)
+    }
+  }, [address])
 
   // Hide if loaded and no active game
   if (!isLoading && (!gameState || !gameState.isActive)) return null

@@ -30,7 +30,7 @@ function deriveUIState(
 
 export const GameBoard: FC<{ contractInstance: ChainReactionInstance; onConnectRequest: () => void }> = ({ contractInstance, onConnectRequest }) => {
   const { signer, account } = useWallet()
-  const { gameState, isLoading, error, refresh } = useChainReaction(contractInstance)
+  const { gameState, isLoading, error, refresh, players } = useChainReaction(contractInstance)
   const [ongoingTxId, setOngoingTxId] = useState<string>()
   const [txError, setTxError] = useState<string>()
   const [durationHours, setDurationHours] = useState(1)

@@ -1,4 +1,4 @@
-import { SignerProvider, ALPH_TOKEN_ID, prettifyAttoAlphAmount, DUST_AMOUNT, ONE_ALPH, MINIMAL_CONTRACT_DEPOSIT } from '@alephium/web3'
+import { SignerProvider, ALPH_TOKEN_ID, prettifyAttoAlphAmount, DUST_AMOUNT, ONE_ALPH, MINIMAL_CONTRACT_DEPOSIT, web3 } from '@alephium/web3'
 import { ChainReactionInstance } from 'my-contracts'
 
 export interface GameState {
@@ -64,6 +64,50 @@ export async function fetchGameState(contract: ChainReactionInstance): Promise<G
     tokenId: fields.tokenId,
     burnBps: fields.burnBps,
     burnedAmount: fields.burnedAmount,
+  }
+}
+
+// Fetch state for v1 contracts (different ABI - no factoryId immutable field)
+// Uses raw node API to bypass typed ABI mismatch
+export async function fetchV1GameState(address: string): Promise<GameState> {
+  const provider = web3.getCurrentNodeProvider()
+  const state = await provider.contracts.getContractsAddressState(address)
+  const mut = state.mutFields
+  const imm = state.immFields
+
+  // V1 mutable fields order: chainId, currentEntry, lastPlayer, lastEntryTimestamp,
+  // pot, boostAmount, playerCount, isActive, baseEntry, endTimestamp,
+  // durationMs, multiplierBps, tokenId, burnBps, burnedAmount
+  const chainId = BigInt(mut[0].value as string)
+  const currentEntry = BigInt(mut[1].value as string)
+  const lastPlayer = mut[2].value as string
+  const lastEntryTimestamp = BigInt(mut[3].value as string)
+  const pot = BigInt(mut[4].value as string)
+  const boostAmount = BigInt(mut[5].value as string)
+  const playerCount = BigInt(mut[6].value as string)
+  const isActive = mut[7].value as boolean
+  const baseEntry = BigInt(mut[8].value as string)
+  const endTimestamp = BigInt(mut[9].value as string)
+  const durationMs = BigInt(mut[10].value as string)
+  const multiplierBps = BigInt(mut[11].value as string)
+  const tokenId = mut[12].value as string
+  const burnBps = BigInt(mut[13].value as string)
+  const burnedAmount = BigInt(mut[14].value as string)
+
+  // V1 immutable fields: durationDecreaseMs, minDuration
+  const durationDecreaseMs = BigInt(imm[0].value as string)
+  const minDuration = BigInt(imm[1].value as string)
+
+  // Compute derived values locally
+  const nextEntryPrice = !isActive ? baseEntry : currentEntry + (currentEntry * multiplierBps / 10000n)
+  const canEnd = isActive && BigInt(Date.now()) >= endTimestamp
+
+  return {
+    chainId, currentEntry, lastPlayer, lastEntryTimestamp,
+    pot, boostAmount, isActive, playerCount, nextEntryPrice,
+    canEnd, endTimestamp, baseEntry, multiplierBps,
+    durationMs, durationDecreaseMs, minDuration, tokenId,
+    burnBps, burnedAmount,
   }
 }
 
