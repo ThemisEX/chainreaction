@@ -3,6 +3,7 @@
 /* eslint-disable */
 
 export * from "./ChainReaction";
+export * from "./ChainReactionV1";
 export * from "./FactoryChainReaction";
 export * from "./contracts";
 export * from "./scripts";

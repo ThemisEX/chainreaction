@@ -2,10 +2,10 @@
 
 import React, { useRef, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { ChainReaction } from 'my-contracts'
+import { ChainReaction, ChainReactionV1 } from 'my-contracts'
 import { GameBoard } from '@/components/GameBoard'
 import { NavBar } from '@/components/NavBar'
-import '@/services/utils' // ensure node provider is set
+import { gameConfig } from '@/services/utils' // ensure node provider is set
 
 function GameContent() {
   const searchParams = useSearchParams()
@@ -28,7 +28,11 @@ function GameContent() {
     )
   }
 
-  const contractInstance = useMemo(() => ChainReaction.at(address), [address])
+  const isV1 = gameConfig.v1Address === address
+  const contractInstance = useMemo(
+    () => isV1 ? ChainReactionV1.at(address) : ChainReaction.at(address),
+    [address, isV1]
+  )
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-white">

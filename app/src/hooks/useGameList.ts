@@ -2,15 +2,15 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { addressFromContractId } from '@alephium/web3'
-import { FactoryChainReactionInstance, ChainReaction, ChainReactionInstance } from 'my-contracts'
-import { fetchGameState, GameState } from '@/services/game.service'
+import { FactoryChainReactionInstance, ChainReaction } from 'my-contracts'
+import { GameContractInstance, fetchGameState, GameState } from '@/services/game.service'
 import { TokenInfo, ALPH_TOKEN, resolveTokenInfo } from '@/services/tokenList'
 
 export interface GameListItem {
   contractId: string
   address: string
   gameId: number
-  instance: ChainReactionInstance
+  instance: GameContractInstance
   state: GameState | null
   tokenInfo: TokenInfo
 }

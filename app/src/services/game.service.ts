@@ -1,5 +1,7 @@
 import { SignerProvider, ALPH_TOKEN_ID, prettifyAttoAlphAmount, DUST_AMOUNT, ONE_ALPH, MINIMAL_CONTRACT_DEPOSIT, web3 } from '@alephium/web3'
-import { ChainReactionInstance } from 'my-contracts'
+import { ChainReactionInstance, ChainReactionV1Instance } from 'my-contracts'
+
+export type GameContractInstance = ChainReactionInstance | ChainReactionV1Instance
 
 export interface GameState {
   chainId: bigint
@@ -37,7 +39,7 @@ function buildTxParams(tokenId: string, payment: bigint) {
   }
 }
 
-export async function fetchGameState(contract: ChainReactionInstance): Promise<GameState> {
+export async function fetchGameState(contract: GameContractInstance): Promise<GameState> {
   try {
     const state = await contract.fetchState()
     const fields = state.fields
@@ -117,7 +119,7 @@ export async function fetchV1GameState(address: string): Promise<GameState> {
 }
 
 export async function startChain(
-  contract: ChainReactionInstance,
+  contract: GameContractInstance,
   signer: SignerProvider,
   payment: bigint,
   durationMs: bigint,
@@ -134,7 +136,7 @@ export async function startChain(
 }
 
 export async function joinChain(
-  contract: ChainReactionInstance,
+  contract: GameContractInstance,
   signer: SignerProvider,
   payment: bigint,
   tokenId: string
@@ -148,7 +150,7 @@ export async function joinChain(
 }
 
 export async function endChain(
-  contract: ChainReactionInstance,
+  contract: GameContractInstance,
   signer: SignerProvider,
   tokenId: string
 ): Promise<{ txId: string }> {
@@ -160,7 +162,7 @@ export async function endChain(
 }
 
 export async function incentivize(
-  contract: ChainReactionInstance,
+  contract: GameContractInstance,
   signer: SignerProvider,
   amount: bigint,
   tokenId: string

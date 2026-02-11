@@ -10,8 +10,7 @@ import { PriceChart } from './PriceChart'
 import { useWallet } from '@alephium/web3-react'
 import { web3 } from '@alephium/web3'
 import { useChainReaction } from '@/hooks/useChainReaction'
-import { ChainReactionInstance } from 'my-contracts'
-import { startChain, joinChain, endChain, incentivize, GameState, normalizeAddress } from '@/services/game.service'
+import { GameContractInstance, startChain, joinChain, endChain, incentivize, GameState, normalizeAddress } from '@/services/game.service'
 import { TokenInfo, ALPH_TOKEN, fetchWalletTokens, fetchTokenBalance, findTokenById, formatTokenAmount } from '@/services/tokenList'
 
 type UIState = 'loading' | 'no-chain' | 'active' | 'claimable' | 'error'
@@ -28,7 +27,7 @@ function deriveUIState(
   return 'active'
 }
 
-export const GameBoard: FC<{ contractInstance: ChainReactionInstance; onConnectRequest: () => void }> = ({ contractInstance, onConnectRequest }) => {
+export const GameBoard: FC<{ contractInstance: GameContractInstance; onConnectRequest: () => void }> = ({ contractInstance, onConnectRequest }) => {
   const { signer, account } = useWallet()
   const { gameState, isLoading, error, refresh, players } = useChainReaction(contractInstance)
   const [ongoingTxId, setOngoingTxId] = useState<string>()

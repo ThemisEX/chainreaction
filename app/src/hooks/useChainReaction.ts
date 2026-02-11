@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { ChainReactionInstance, ChainReactionTypes } from 'my-contracts'
-import { fetchGameState, GameState, normalizeAddress } from '@/services/game.service'
+import { ChainReactionTypes } from 'my-contracts'
+import { GameContractInstance, fetchGameState, GameState, normalizeAddress } from '@/services/game.service'
 
 export interface PlayerEntry {
   position: number
@@ -11,7 +11,7 @@ export interface PlayerEntry {
 
 const FALLBACK_POLL_MS = 15000
 
-export function useChainReaction(contract: ChainReactionInstance) {
+export function useChainReaction(contract: GameContractInstance) {
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
