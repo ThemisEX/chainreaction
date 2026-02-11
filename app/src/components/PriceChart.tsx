@@ -1,6 +1,6 @@
 'use client'
 
-import React, { FC, useMemo } from 'react'
+import { FC, useMemo, useRef } from 'react'
 import { Line } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -12,6 +12,7 @@ import {
   Filler,
 } from 'chart.js'
 import { formatTokenAmount } from '@/services/tokenList'
+import { PlayerEntry } from '@/hooks/useChainReaction'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
 
@@ -22,6 +23,7 @@ interface PriceChartProps {
   tokenSymbol: string
   tokenDecimals: number
   preview?: boolean
+  players?: PlayerEntry[]
 }
 
 function computePrices(baseEntry: bigint, multiplierBps: bigint, count: number): bigint[] {
@@ -35,7 +37,10 @@ function computePrices(baseEntry: bigint, multiplierBps: bigint, count: number):
 
 const PREVIEW_MILESTONES = new Set([1, 10, 20, 50, 100])
 
-export const PriceChart: FC<PriceChartProps> = ({ baseEntry, multiplierBps, playerCount, tokenSymbol, tokenDecimals, preview }) => {
+export const PriceChart: FC<PriceChartProps> = ({ baseEntry, multiplierBps, playerCount, tokenSymbol, tokenDecimals, preview, players }) => {
+  const playerMapRef = useRef<Map<number, string>>(new Map())
+  const startIdxRef = useRef(0)
+
   const chartData = useMemo(() => {
     const pc = Number(playerCount)
 
@@ -70,12 +75,19 @@ export const PriceChart: FC<PriceChartProps> = ({ baseEntry, multiplierBps, play
       }
     }
 
-    // Active game mode: 10 past + 10 future
-    const totalPlayers = pc + 10
+    // Active game mode: 10 past + 40 future
+    const totalPlayers = pc + 40
     const allPrices = computePrices(baseEntry, multiplierBps, totalPlayers)
 
+    const pMap = new Map<number, string>()
+    if (players) {
+      for (const p of players) pMap.set(p.position, p.address)
+    }
+    playerMapRef.current = pMap
+
     const startIdx = Math.max(0, pc - 10)
-    const endIdx = Math.min(totalPlayers, pc + 10)
+    startIdxRef.current = startIdx
+    const endIdx = Math.min(totalPlayers, pc + 40)
     const slice = allPrices.slice(startIdx, endIdx)
 
     const labels = slice.map((_, i) => `#${startIdx + i + 1}`)
@@ -124,7 +136,7 @@ export const PriceChart: FC<PriceChartProps> = ({ baseEntry, multiplierBps, play
         },
       ],
     }
-  }, [baseEntry, multiplierBps, playerCount, tokenDecimals, preview])
+  }, [baseEntry, multiplierBps, playerCount, tokenDecimals, preview, players])
 
   const options = useMemo(() => {
     const formatTick = (value: number | string) => {
@@ -152,9 +164,12 @@ export const PriceChart: FC<PriceChartProps> = ({ baseEntry, multiplierBps, play
             },
             title: (items: { label: string }[]) => {
               const label = items[0]?.label
-              if (label) return `Player ${label}`
               const idx = (items[0] as { dataIndex?: number })?.dataIndex
-              return idx != null ? `Player #${idx + 1}` : ''
+              const pos = idx != null ? startIdxRef.current + idx + 1 : 0
+              const addr = playerMapRef.current.get(pos)
+              const playerLabel = label || (idx != null ? `#${idx + 1}` : '')
+              if (addr) return `Player ${playerLabel} — ${addr.slice(0, 3)}...${addr.slice(-3)}`
+              return `Player ${playerLabel}`
             },
           },
           displayColors: false,
@@ -164,10 +179,11 @@ export const PriceChart: FC<PriceChartProps> = ({ baseEntry, multiplierBps, play
         x: {
           grid: { display: false },
           ticks: {
-            font: { size: 10 },
+            font: { size: 9 },
             color: '#9ca3af',
-            maxRotation: 0,
-            autoSkip: false,
+            maxRotation: preview ? 0 : 45,
+            autoSkip: !preview,
+            maxTicksLimit: preview ? undefined : 15,
           },
         },
         y: {
@@ -180,7 +196,7 @@ export const PriceChart: FC<PriceChartProps> = ({ baseEntry, multiplierBps, play
         },
       },
     }
-  }, [tokenDecimals, tokenSymbol])
+  }, [tokenDecimals, tokenSymbol, preview])
 
   return (
     <div className={preview ? 'w-full flex-1 min-h-[300px]' : 'w-full aspect-[2/1] min-h-[180px] max-h-[300px]'}>

@@ -335,6 +335,7 @@ export const GameBoard: FC<{ contractInstance: ChainReactionInstance; onConnectR
                 playerCount={gameState.playerCount}
                 tokenSymbol={activeToken.symbol}
                 tokenDecimals={activeToken.decimals}
+                players={players}
               />
             </div>
           </details>
