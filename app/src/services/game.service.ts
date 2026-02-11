@@ -38,32 +38,37 @@ function buildTxParams(tokenId: string, payment: bigint) {
 }
 
 export async function fetchGameState(contract: ChainReactionInstance): Promise<GameState> {
-  const state = await contract.fetchState()
-  const fields = state.fields
+  try {
+    const state = await contract.fetchState()
+    const fields = state.fields
 
-  const nextEntryPriceResult = await contract.view.getNextEntryPrice()
-  const canEndResult = await contract.view.canEnd()
+    const nextEntryPriceResult = await contract.view.getNextEntryPrice()
+    const canEndResult = await contract.view.canEnd()
 
-  return {
-    chainId: fields.chainId,
-    currentEntry: fields.currentEntry,
-    lastPlayer: fields.lastPlayer,
-    lastEntryTimestamp: fields.lastEntryTimestamp,
-    pot: fields.pot,
-    boostAmount: fields.boostAmount,
-    isActive: fields.isActive,
-    playerCount: fields.playerCount,
-    nextEntryPrice: nextEntryPriceResult.returns,
-    canEnd: canEndResult.returns,
-    endTimestamp: fields.endTimestamp,
-    baseEntry: fields.baseEntry,
-    multiplierBps: fields.multiplierBps,
-    durationMs: fields.durationMs,
-    durationDecreaseMs: fields.durationDecreaseMs,
-    minDuration: fields.minDuration,
-    tokenId: fields.tokenId,
-    burnBps: fields.burnBps,
-    burnedAmount: fields.burnedAmount,
+    return {
+      chainId: fields.chainId,
+      currentEntry: fields.currentEntry,
+      lastPlayer: fields.lastPlayer,
+      lastEntryTimestamp: fields.lastEntryTimestamp,
+      pot: fields.pot,
+      boostAmount: fields.boostAmount,
+      isActive: fields.isActive,
+      playerCount: fields.playerCount,
+      nextEntryPrice: nextEntryPriceResult.returns,
+      canEnd: canEndResult.returns,
+      endTimestamp: fields.endTimestamp,
+      baseEntry: fields.baseEntry,
+      multiplierBps: fields.multiplierBps,
+      durationMs: fields.durationMs,
+      durationDecreaseMs: fields.durationDecreaseMs,
+      minDuration: fields.minDuration,
+      tokenId: fields.tokenId,
+      burnBps: fields.burnBps,
+      burnedAmount: fields.burnedAmount,
+    }
+  } catch {
+    // Fall back to raw API for v1 contracts with different ABI
+    return fetchV1GameState(contract.address)
   }
 }
 

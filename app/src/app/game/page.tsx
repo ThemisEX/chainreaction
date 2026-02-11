@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { ChainReaction } from 'my-contracts'
 import { GameBoard } from '@/components/GameBoard'
 import { NavBar } from '@/components/NavBar'
+import '@/services/utils' // ensure node provider is set
 
 function GameContent() {
   const searchParams = useSearchParams()
