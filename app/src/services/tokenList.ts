@@ -99,6 +99,20 @@ export function findTokenById(tokens: TokenInfo[], id: string): TokenInfo | unde
   return tokens.find(t => t.id === id)
 }
 
+export async function resolveTokenInfo(tokenId: string): Promise<TokenInfo> {
+  if (!tokenId || tokenId === ALPH_TOKEN.id || /^0+$/.test(tokenId)) {
+    return ALPH_TOKEN
+  }
+  const allTokens = await fetchTokenList()
+  return allTokens.find(t => t.id === tokenId) ?? {
+    id: tokenId,
+    name: tokenId.slice(0, 8),
+    symbol: tokenId.slice(0, 6),
+    decimals: 18,
+    logoURI: '',
+  }
+}
+
 export function formatTokenAmount(amount: bigint, decimals: number): string {
   if (decimals === 0) return amount.toString()
 

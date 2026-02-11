@@ -20,6 +20,7 @@ jobs:
     env:
       NEXT_PUBLIC_NETWORK: ${{ vars.NEXT_PUBLIC_NETWORK || 'testnet' }}
       NEXT_PUBLIC_NODE_URL: ${{ vars.NEXT_PUBLIC_NODE_URL || '' }}
+      NEXT_PUBLIC_CHAINREACTIONV1: ${{ vars.NEXT_PUBLIC_CHAINREACTIONV1 || '' }}
     steps:
       - uses: actions/checkout@v4
 

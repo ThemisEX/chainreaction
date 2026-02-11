@@ -20,7 +20,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center bg-white">
       <NavBar ref={connectRef} />
-      <main className="flex-1 flex flex-col items-center w-full max-w-lg px-4 py-8 gap-5">
+      <main className="flex-1 flex flex-col items-center w-full max-w-6xl px-4 py-8 gap-5">
         <h1 className="text-2xl font-bold text-gray-900">Games</h1>
 
         {gameConfig.v1Address && (
