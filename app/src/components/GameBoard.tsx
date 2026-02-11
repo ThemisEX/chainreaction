@@ -35,9 +35,9 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const [txError, setTxError] = useState<string>()
   const [durationHours, setDurationHours] = useState(1)
   const [durationMinutes, setDurationMinutes] = useState(0)
-  const [multiplierPct, setMultiplierPct] = useState(20)
+  const [multiplierPct, setMultiplierPct] = useState(5)
   const [burnPct, setBurnPct] = useState(5)
-  const [baseEntry, setBaseEntry] = useState('0.02')
+  const [baseEntry, setBaseEntry] = useState('0.1')
   const [incentiveAmount, setIncentiveAmount] = useState('1')
   const [selectedToken, setSelectedToken] = useState<TokenInfo>(ALPH_TOKEN)
   const [tokenList, setTokenList] = useState<TokenInfo[]>([ALPH_TOKEN])
@@ -46,6 +46,8 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
   const [soundEnabled, setSoundEnabled] = useState(false)
   const wasLastPlayerRef = useRef(false)
   const dingRef = useRef<HTMLAudioElement | null>(null)
+  const notified5minRef = useRef(false)
+  const notified1minRef = useRef(false)
 
   useEffect(() => {
     if (account?.address) {
@@ -69,13 +71,48 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
     ? normalizeAddress(account.address) === normalizeAddress(gameState.lastPlayer)
     : false
 
+  const notify = (title: string, body: string) => {
+    try {
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '/favicon.ico' })
+      }
+    } catch (e) {
+      console.warn('Notification failed:', e)
+    }
+  }
+
   useEffect(() => {
-    if (wasLastPlayerRef.current && !isLastPlayer && soundEnabled && dingRef.current) {
-      dingRef.current.currentTime = 0
-      dingRef.current.play().catch(() => {})
+    if (wasLastPlayerRef.current && !isLastPlayer && soundEnabled) {
+      if (dingRef.current) {
+        dingRef.current.currentTime = 0
+        dingRef.current.play().catch(() => {})
+      }
+      notify('You\'ve been overtaken!', 'Someone just took the lead in Chain Reaction. Play now to reclaim it!')
     }
     wasLastPlayerRef.current = isLastPlayer
   }, [isLastPlayer, soundEnabled])
+
+  useEffect(() => {
+    if (!soundEnabled || !gameState?.isActive) {
+      notified5minRef.current = false
+      notified1minRef.current = false
+      return
+    }
+    const check = () => {
+      const remaining = Number(gameState.endTimestamp) - Date.now()
+      if (remaining <= 5 * 60 * 1000 && !notified5minRef.current) {
+        notified5minRef.current = true
+        notify('5 minutes left!', 'Chain Reaction is ending soon. Make your move!')
+      }
+      if (remaining <= 60 * 1000 && remaining > 0 && !notified1minRef.current) {
+        notified1minRef.current = true
+        notify('1 minute left!', 'Chain Reaction is about to end! Last chance to play!')
+      }
+    }
+    check()
+    const interval = setInterval(check, 5000)
+    return () => clearInterval(interval)
+  }, [soundEnabled, gameState?.isActive, gameState?.endTimestamp])
 
   const hasEnoughBalance = userBalance !== null && gameState
     ? userBalance >= gameState.nextEntryPrice
@@ -245,14 +282,22 @@ export const GameBoard: FC<{ config: GameConfig; onConnectRequest: () => void }>
       />
 
       <button
-        onClick={() => {
-          setSoundEnabled(prev => {
-            if (!prev) {
-              if (!dingRef.current) dingRef.current = new Audio('/ding.mp3')
-              dingRef.current.play().catch(() => {})
+        onClick={async () => {
+          const enabling = !soundEnabled
+          setSoundEnabled(enabling)
+          if (enabling) {
+            if (!dingRef.current) dingRef.current = new Audio('/ding.mp3')
+            dingRef.current.play().catch(() => {})
+            if (typeof Notification !== 'undefined') {
+              let permission = Notification.permission
+              if (permission === 'default') {
+                permission = await Notification.requestPermission()
+              }
+              if (permission === 'granted') {
+                new Notification('Notifications enabled', { body: 'You\'ll be notified when overtaken or when time is running out.', icon: '/favicon.ico' })
+              }
             }
-            return !prev
-          })
+          }
         }}
         className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full border transition-colors -mt-2 ${
           soundEnabled
