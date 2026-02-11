@@ -1,6 +1,6 @@
 'use client'
 
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 import Link from 'next/link'
 import { ChainReaction } from 'my-contracts'
 import { useChainReaction } from '@/hooks/useChainReaction'
@@ -8,7 +8,7 @@ import { formatTokenAmount } from '@/services/tokenList'
 import { shortenAddress } from '@/services/game.service'
 
 export const LegacyGame: FC<{ address: string }> = ({ address }) => {
-  const contractInstance = ChainReaction.at(address)
+  const contractInstance = useMemo(() => ChainReaction.at(address), [address])
   const { gameState, isLoading } = useChainReaction(contractInstance)
 
   // Hide if loaded and no active game

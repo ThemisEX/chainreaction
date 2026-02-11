@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useCallback, Suspense } from 'react'
+import React, { useRef, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ChainReaction } from 'my-contracts'
 import { GameBoard } from '@/components/GameBoard'
@@ -27,7 +27,7 @@ function GameContent() {
     )
   }
 
-  const contractInstance = ChainReaction.at(address)
+  const contractInstance = useMemo(() => ChainReaction.at(address), [address])
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-white">
