@@ -13,24 +13,24 @@ interface BigButtonProps {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  default: 'bg-gray-200 text-gray-500 border-gray-300',
-  start: 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.3)]',
-  join: 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.3)]',
-  claim: 'bg-amber-400 hover:bg-amber-500 text-gray-900 border-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.4)] animate-pulse',
+  default: 'bg-btn-default-bg text-btn-default-text border-btn-default-border',
+  start: 'bg-primary hover:bg-primary-hover text-primary-fg border-primary',
+  join: 'bg-btn-join hover:bg-btn-join-hover text-primary-fg border-btn-join',
+  claim: 'bg-btn-claim hover:bg-btn-claim-hover text-btn-claim-fg border-btn-claim animate-pulse',
 }
 
 const ringStyles: Record<ButtonVariant, string> = {
   default: '',
-  start: 'border-emerald-400',
-  join: 'border-blue-400',
-  claim: 'border-amber-400',
+  start: 'border-accent-border',
+  join: 'border-btn-join',
+  claim: 'border-btn-claim',
 }
 
 const spinnerColors: Record<ButtonVariant, string> = {
-  default: 'border-gray-400 border-t-transparent',
-  start: 'border-white/40 border-t-white',
-  join: 'border-white/40 border-t-white',
-  claim: 'border-gray-900/30 border-t-gray-900',
+  default: 'border-btn-default-text border-t-transparent',
+  start: 'border-primary-fg/40 border-t-primary-fg',
+  join: 'border-primary-fg/40 border-t-primary-fg',
+  claim: 'border-btn-claim-fg/30 border-t-btn-claim-fg',
 }
 
 export const BigButton: FC<BigButtonProps> = ({ label, onClick, disabled, variant, loading }) => {
@@ -43,6 +43,7 @@ export const BigButton: FC<BigButtonProps> = ({ label, onClick, disabled, varian
           flex items-center justify-center text-center leading-tight
           active:not-disabled:scale-95 hover:not-disabled:scale-105
           disabled:opacity-50 disabled:cursor-not-allowed
+          [background-image:var(--bg-image-big-button)] bg-cover bg-center                    
           ${variantStyles[variant]}
         `}
         onClick={onClick}

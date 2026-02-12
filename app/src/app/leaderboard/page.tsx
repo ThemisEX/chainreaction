@@ -1,29 +1,22 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { ChainReactionV1 } from 'my-contracts'
-import { NavBar } from '@/components/NavBar'
 import { Leaderboard } from '@/components/Leaderboard'
 import { useLeaderboard } from '@/hooks/useLeaderboard'
 import { useWallet } from '@alephium/web3-react'
 import { gameConfig } from '@/services/utils'
 
 export default function LeaderboardPage() {
-  const v1Instance = useMemo(
-    () => gameConfig.v1Address ? ChainReactionV1.at(gameConfig.v1Address) : null,
-    []
-  )
-  const { leaderboard, isLoading, error } = useLeaderboard(v1Instance!)
+  const v1Instance = useMemo(() => gameConfig.getV1Instance(), [])
+  const { leaderboard, isLoading, error } = useLeaderboard(v1Instance)
   const { account } = useWallet()
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-white">
-      <NavBar />
       <main className="flex-1 flex flex-col items-center w-full max-w-lg px-4 py-8 gap-5">
-        <h1 className="text-2xl font-bold text-gray-900">Leaderboard</h1>
+        <h1 className="text-2xl font-bold text-page-heading">Leaderboard</h1>
 
         {error && (
-          <p className="w-full text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <p className="w-full text-center text-sm text-notification-error-text bg-notification-error-bg border border-notification-error-border rounded-xl px-4 py-3">
             {error}
           </p>
         )}
@@ -34,13 +27,13 @@ export default function LeaderboardPage() {
           currentUserAddress={account?.address}
         />
 
-        <p className="text-xs text-gray-400 mt-4">
+        <p className="text-xs text-footer-text mt-4">
           Built by{' '}
-          <a href="https://notrustverify.ch" target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-600 underline">
+          <a href="https://notrustverify.ch" target="_blank" rel="noopener noreferrer" className="text-footer-link hover:text-footer-link-hover underline">
             No Trust Verify
           </a>
         </p>
       </main>
-    </div>
+    
   )
 }
