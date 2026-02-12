@@ -7,6 +7,7 @@ import { NavBar } from '@/components/NavBar'
 import { Footer } from '@/components/Footer'
 import { ThemeBootstrap } from '@/components/ThemeBootstrap'
 import { EmbeddedWalletProvider } from '@/embed/EmbeddedWalletContext'
+import { EmbedResize } from '@/embed/EmbedResize'
 
 export const metadata = {
   title: "Chain Reaction",
@@ -48,6 +49,7 @@ export default function RootLayout({
         </Suspense>
         <AlephiumWalletProvider theme="retro" network={gameConfig.network} addressGroup={gameConfig.groupIndex}>
           <EmbeddedWalletProvider>
+            <EmbedResize />
             <div className="theme-container min-h-screen flex flex-col items-center">
               <NavBar />
               {children}

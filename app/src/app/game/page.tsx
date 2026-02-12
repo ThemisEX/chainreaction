@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation'
 import { ChainReaction, ChainReactionV1 } from 'my-contracts'
 import { GameBoard } from '@/components/GameBoard'
 import { gameConfig } from '@/services/utils' // ensure node provider is set
-import { useEmbedResize } from '@/hooks/useEmbedResize'
 
 function parseTokenIdsFromQuery(searchParams: URLSearchParams): string[] | null {
   const raw = searchParams.get('tokens')
@@ -19,8 +18,6 @@ function GameContent() {
   const address = searchParams.get('address')
   const tokenIdsFromQuery = useMemo(() => parseTokenIdsFromQuery(searchParams), [searchParams])
   const connectRef = useRef<HTMLDivElement>(null)
-
-  useEmbedResize()
 
   const openConnect = useCallback(() => {
     const btn = connectRef.current?.querySelector('button')
