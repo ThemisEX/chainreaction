@@ -12,6 +12,7 @@ import { web3 } from '@alephium/web3'
 import { useChainReaction } from '@/hooks/useChainReaction'
 import { GameContractInstance, startChain, joinChain, endChain, incentivize, GameState, normalizeAddress } from '@/services/game.service'
 import { TokenInfo, ALPH_TOKEN, fetchWalletTokens, fetchTokenBalance, resolveTokenInfo, formatTokenAmount } from '@/services/tokenList'
+import { ActivityFeed } from './ActivityFeed'
 
 type UIState = 'loading' | 'no-chain' | 'active' | 'claimable' | 'error'
 
@@ -270,147 +271,175 @@ export const GameBoard: FC<{
   const buttonProps = getButtonProps()
 
   return (
-    <div className="flex flex-col items-center w-full max-w-2xl px-4 py-8 gap-5">
+    <div className="flex flex-col items-center w-full px-4 py-8 gap-5">
       {txError && (
-        <p className="w-full text-center text-sm text-notification-error-text bg-notification-error-bg border border-notification-error-border rounded-xl px-4 py-3 break-all line-clamp-3">
+        <p className="w-full max-w-lg text-center text-sm text-notification-error-text bg-notification-error-bg border border-notification-error-border rounded-xl px-4 py-3 break-all line-clamp-3">
           {txError}
         </p>
       )}
 
-      {gameState && uiState === 'active' && (
-        <>
-          <CountdownTimer endTimestamp={gameState.endTimestamp} />
-          <p className="text-xs text-muted -mt-3">
-            Next play resets to{' '}
-            {(() => {
-              const nextCount = gameState.playerCount + 1n
-              const decrease = nextCount * gameState.durationDecreaseMs
-              const next = gameState.durationMs > decrease
-                ? gameState.durationMs - decrease
-                : gameState.minDuration
-              const clamped = next < gameState.minDuration ? gameState.minDuration : next
-              const totalSec = Math.ceil(Number(clamped) / 1000)
-              const h = Math.floor(totalSec / 3600)
-              const m = Math.floor((totalSec % 3600) / 60)
-              const s = totalSec % 60
-              return h > 0
-                ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-                : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-            })()}
-          </p>
-        </>
-      )}
-
-      {gameState && uiState === 'claimable' && (
-        <p className="text-lg font-bold text-amber-500 text-center animate-pulse">
-          {isLastPlayer ? 'You won! Claim your prize!' : 'Chain ended! Anyone can trigger the payout.'}
-        </p>
-      )}
-
-      <BigButton
-        label={buttonProps.label}
-        onClick={buttonProps.onClick}
-        disabled={buttonProps.disabled}
-        variant={buttonProps.variant}
-        loading={!!ongoingTxId}
-      />
-
-      <button
-        onClick={async () => {
-          const enabling = !soundEnabled
-          setSoundEnabled(enabling)
-          if (enabling) {
-            if (!dingRef.current) dingRef.current = new Audio('/ding.mp3')
-            dingRef.current.play().catch(() => {})
-            if (typeof Notification !== 'undefined') {
-              let permission = Notification.permission
-              if (permission === 'default') {
-                permission = await Notification.requestPermission()
-              }
-              if (permission === 'granted') {
-                new Notification('Notifications enabled', { body: 'You\'ll be notified when overtaken or when time is running out.', icon: '/favicon.ico' })
-              }
-            }
-          }
-        }}
-        className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full border transition-colors -mt-2 ${
-          soundEnabled
-            ? 'bg-notification-on-bg border-notification-on-border text-notification-on-text'
-            : 'bg-notification-off-bg border-notification-off-border text-notification-off-text hover:border-notification-off-hover-border hover:text-notification-off-hover-text'
-        }`}
-      >
-        <span className={`inline-block w-2 h-2 rounded-full ${soundEnabled ? 'bg-notification-on-dot' : 'bg-notification-off-dot'}`} />
-        {soundEnabled ? 'Notify when overtaken: on' : 'Notify when overtaken: off'}
-      </button>
-
       {gameState && gameState.isActive && (
-        <>
-          <GameStats
-            pot={gameState.pot}
-            boostAmount={gameState.boostAmount}
-            entryPrice={gameState.nextEntryPrice}
-            lastPlayer={gameState.lastPlayer}
-            playerCount={gameState.playerCount}
-            multiplierBps={gameState.multiplierBps}
-            burnedAmount={gameState.burnedAmount}
-            burnBps={gameState.burnBps}
-            currentUserAddress={ongoingTxId ? undefined : account?.address}
-            tokenSymbol={activeToken.symbol}
-            tokenDecimals={activeToken.decimals}
-          />
-          {onBrowseGames && (
+        <div className="w-full max-w-5xl flex flex-col lg:flex-row gap-6 items-center lg:items-start">
+          {/* Left: game controls */}
+          <div className="flex-1 flex flex-col items-center gap-5 min-w-0">
+            {uiState === 'active' && (
+              <>
+                <CountdownTimer endTimestamp={gameState.endTimestamp} />
+                <p className="text-xs text-muted -mt-3">
+                  Next play resets to{' '}
+                  {(() => {
+                    const nextCount = gameState.playerCount + 1n
+                    const decrease = nextCount * gameState.durationDecreaseMs
+                    const next = gameState.durationMs > decrease
+                      ? gameState.durationMs - decrease
+                      : gameState.minDuration
+                    const clamped = next < gameState.minDuration ? gameState.minDuration : next
+                    const totalSec = Math.ceil(Number(clamped) / 1000)
+                    const h = Math.floor(totalSec / 3600)
+                    const m = Math.floor((totalSec % 3600) / 60)
+                    const s = totalSec % 60
+                    return h > 0
+                      ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+                      : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+                  })()}
+                </p>
+              </>
+            )}
+
+            {uiState === 'claimable' && (
+              <p className="text-lg font-bold text-amber-500 text-center animate-pulse">
+                {isLastPlayer ? 'You won! Claim your prize!' : 'Chain ended! Anyone can trigger the payout.'}
+              </p>
+            )}
+
+            <BigButton
+              label={buttonProps.label}
+              onClick={buttonProps.onClick}
+              disabled={buttonProps.disabled}
+              variant={buttonProps.variant}
+              loading={!!ongoingTxId}
+            />
+
             <button
-              onClick={onBrowseGames}
-              className="px-5 py-2.5 text-sm font-medium rounded-xl border border-gray-200 text-gray-500 hover:border-emerald-300 hover:text-emerald-600 transition-colors flex items-center gap-2"
+              onClick={async () => {
+                const enabling = !soundEnabled
+                setSoundEnabled(enabling)
+                if (enabling) {
+                  if (!dingRef.current) dingRef.current = new Audio('/ding.mp3')
+                  dingRef.current.play().catch(() => {})
+                  if (typeof Notification !== 'undefined') {
+                    let permission = Notification.permission
+                    if (permission === 'default') {
+                      permission = await Notification.requestPermission()
+                    }
+                    if (permission === 'granted') {
+                      new Notification('Notifications enabled', { body: 'You\'ll be notified when overtaken or when time is running out.', icon: '/favicon.ico' })
+                    }
+                  }
+                }
+              }}
+              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full border transition-colors -mt-2 ${
+                soundEnabled
+                  ? 'bg-notification-on-bg border-notification-on-border text-notification-on-text'
+                  : 'bg-notification-off-bg border-notification-off-border text-notification-off-text hover:border-notification-off-hover-border hover:text-notification-off-hover-text'
+              }`}
             >
-              Browse all games
-              <span className="text-lg leading-none">&darr;</span>
+              <span className={`inline-block w-2 h-2 rounded-full ${soundEnabled ? 'bg-notification-on-dot' : 'bg-notification-off-dot'}`} />
+              {soundEnabled ? 'Notify when overtaken: on' : 'Notify when overtaken: off'}
             </button>
-          )}
-          <details className="w-full max-w-sm">
-            <summary className="text-sm text-muted cursor-pointer hover:text-primary transition-colors text-center select-none">
-              Price curve
-            </summary>
-            <div className="mt-3">
-              <PriceChart
-                baseEntry={gameState.baseEntry}
-                multiplierBps={gameState.multiplierBps}
-                playerCount={gameState.playerCount}
-                tokenSymbol={activeToken.symbol}
-                tokenDecimals={activeToken.decimals}
-                players={players}
-              />
-            </div>
-          </details>
-          <details className="w-full max-w-sm">
-          <summary className="text-sm text-muted cursor-pointer hover:text-primary transition-colors text-center select-none">
-            Boost the pot
-          </summary>
-          <div className="mt-3 flex gap-2 items-end">
-            <div className="flex-1 flex flex-col gap-1">
-<label htmlFor="incentive" className="text-[11px] text-label uppercase tracking-wider">
-              Amount ({activeToken.symbol})
-              </label>
-              <input
-                id="incentive"
-                type="number"
-                min={0.1}
-                step={0.1}
-                value={incentiveAmount}
-                onChange={(e) => setIncentiveAmount(e.target.value)}
-                className="w-full px-3 py-2 text-center text-base rounded-lg border border-input-border bg-input-bg text-input-fg focus:outline-none focus:ring-2 focus:ring-input-focus-ring/30 focus:border-input-focus-ring"
-              />
-            </div>
-            <button
-              onClick={handleIncentivize}
-              disabled={!!ongoingTxId || !incentiveAmount || parseFloat(incentiveAmount) <= 0}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-fg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Add
-            </button>
+
+            <GameStats
+              pot={gameState.pot}
+              boostAmount={gameState.boostAmount}
+              entryPrice={gameState.nextEntryPrice}
+              lastPlayer={gameState.lastPlayer}
+              playerCount={gameState.playerCount}
+              multiplierBps={gameState.multiplierBps}
+              burnedAmount={gameState.burnedAmount}
+              burnBps={gameState.burnBps}
+              currentUserAddress={ongoingTxId ? undefined : account?.address}
+              tokenSymbol={activeToken.symbol}
+              tokenDecimals={activeToken.decimals}
+            />
+
+            {onBrowseGames && (
+              <button
+                onClick={onBrowseGames}
+                className="px-5 py-2.5 text-sm font-medium rounded-xl border border-card-border text-muted hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
+              >
+                Browse all games
+                <span className="text-lg leading-none">&darr;</span>
+              </button>
+            )}
+
+            <details className="w-full max-w-sm">
+              <summary className="text-sm text-muted cursor-pointer hover:text-primary transition-colors text-center select-none">
+                Price curve
+              </summary>
+              <div className="mt-3">
+                <PriceChart
+                  baseEntry={gameState.baseEntry}
+                  multiplierBps={gameState.multiplierBps}
+                  playerCount={gameState.playerCount}
+                  tokenSymbol={activeToken.symbol}
+                  tokenDecimals={activeToken.decimals}
+                  players={players}
+                />
+              </div>
+            </details>
+            <details className="w-full max-w-sm">
+              <summary className="text-sm text-muted cursor-pointer hover:text-primary transition-colors text-center select-none">
+                Boost the pot
+              </summary>
+              <div className="mt-3 flex gap-2 items-end">
+                <div className="flex-1 flex flex-col gap-1">
+                  <label htmlFor="incentive" className="text-[11px] text-label uppercase tracking-wider">
+                    Amount ({activeToken.symbol})
+                  </label>
+                  <input
+                    id="incentive"
+                    type="number"
+                    min={0.1}
+                    step={0.1}
+                    value={incentiveAmount}
+                    onChange={(e) => setIncentiveAmount(e.target.value)}
+                    className="w-full px-3 py-2 text-center text-base rounded-lg border border-input-border bg-input-bg text-input-fg focus:outline-none focus:ring-2 focus:ring-input-focus-ring/30 focus:border-input-focus-ring"
+                  />
+                </div>
+                <button
+                  onClick={handleIncentivize}
+                  disabled={!!ongoingTxId || !incentiveAmount || parseFloat(incentiveAmount) <= 0}
+                  className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-fg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+            </details>
           </div>
-        </details>
-        </>
+
+          {/* Right: activity feed */}
+          <div className="w-full lg:w-72 lg:sticky lg:top-4 rounded-2xl border border-card-border bg-card-bg overflow-hidden lg:max-h-[calc(100vh-6rem)]">
+            <ActivityFeed
+              players={players}
+              baseEntry={gameState.baseEntry}
+              multiplierBps={gameState.multiplierBps}
+              tokenSymbol={activeToken.symbol}
+              tokenDecimals={activeToken.decimals}
+              currentUserAddress={account?.address}
+              playerCount={gameState.playerCount}
+            />
+          </div>
+        </div>
+      )}
+
+      {(uiState === 'loading' || uiState === 'no-chain' || uiState === 'error') && (
+        <BigButton
+          label={buttonProps.label}
+          onClick={buttonProps.onClick}
+          disabled={buttonProps.disabled}
+          variant={buttonProps.variant}
+          loading={!!ongoingTxId}
+        />
       )}
 
       {uiState === 'no-chain' && (
@@ -560,7 +589,7 @@ export const GameBoard: FC<{
         </button>
       </div>
 
-    
+
     </div>
   )
 }
