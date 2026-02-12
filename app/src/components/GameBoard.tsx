@@ -465,7 +465,7 @@ export const GameBoard: FC<{
           </div>
 
           {/* Right: activity feed */}
-          <div className="w-full lg:w-72 lg:sticky lg:top-4 rounded-2xl border border-card-border bg-card-bg ">
+          <div className="w-full lg:w-72 lg:sticky lg:top-4 rounded-2xl border border-card-border bg-card-bg overflow-hidden lg:max-h-[calc(100vh-6rem)]">
             <ActivityFeed
               players={players}
               baseEntry={gameState.baseEntry}
@@ -492,7 +492,7 @@ export const GameBoard: FC<{
       {uiState === 'no-chain' && (
         <>
           <p className="text-muted text-center text-sm">No active chain. Be the first to start one!</p>
-          <div className="w-full flex flex-col md:flex-row gap-5 md:items-stretch items-start justify-center">
+          <div className="w-full max-w-2xl flex flex-col md:flex-row gap-5 md:items-stretch items-center justify-center">
           <div className="w-full max-w-xs flex flex-col gap-4 p-5 bg-stat-card-bg rounded-2xl border border-card-border">
             <TokenSelector
               tokens={tokenList}
