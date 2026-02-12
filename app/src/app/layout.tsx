@@ -6,6 +6,7 @@ import React, { Suspense } from 'react'
 import { NavBar } from '@/components/NavBar'
 import { Footer } from '@/components/Footer'
 import { ThemeBootstrap } from '@/components/ThemeBootstrap'
+import { EmbeddedWalletProvider } from '@/embed/EmbeddedWalletContext'
 
 export const metadata = {
   title: "Chain Reaction",
@@ -46,11 +47,13 @@ export default function RootLayout({
           <ThemeBootstrap />
         </Suspense>
         <AlephiumWalletProvider theme="retro" network={gameConfig.network} addressGroup={gameConfig.groupIndex}>
-          <div className="theme-container min-h-screen flex flex-col items-center">
-            <NavBar />
-            {children}
-            <Footer />
-          </div>
+          <EmbeddedWalletProvider>
+            <div className="theme-container min-h-screen flex flex-col items-center">
+              <NavBar />
+              {children}
+              <Footer />
+            </div>
+          </EmbeddedWalletProvider>
         </AlephiumWalletProvider>
       </body>
     </html>

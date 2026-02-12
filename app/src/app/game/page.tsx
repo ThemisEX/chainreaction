@@ -47,8 +47,9 @@ function GameContent() {
           contractInstance={contractInstance}
           onConnectRequest={openConnect}
           tokenIdsFromQuery={tokenIdsFromQuery}
+          isV1={isV1}
         />
-      </main>    
+      </main>
   )
 }
 
